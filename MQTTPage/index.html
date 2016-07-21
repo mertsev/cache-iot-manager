@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>	Cache Server Page </title>
+
+<!--ANGULAR JS-->
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<!--JQUERY-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<!--BOOTSTRAP -->
+<link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap-theme.min.css">
+<script src="bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+
+<!--MY CSS-->
+<link rel="stylesheet" type="text/css" href="css/main.css" />
+<script src="js/main.js"></script>
+</head>
+<body>
+
+<!--Preloader-->
+  <div id="page-preloader"><div class="loader"></div><span class="spinner">Loading...</span></div>
+
+<div ng-app="testApp" ng-controller="testCtrl">
+
+	<span class="ng-app">
+  <form name="validateForm">
+    <!--Connect-->
+    <div id="firstlyForm">
+      <div class="col-xs-12">
+        <input type="text" class="form-control" placeholder="UserId.." ng-model="UserId" name="UserId" required>
+      </div>
+        <button type="button" class="btn col-sm-2 col-xs-12 col-centered {{connectClass}}" ng-click="connOrDisc()" ng-disabled="!validateForm.UserId.$valid">{{connectText}}</button>    
+</div>
+    <!--Subscribe-->
+    <div class="row" ng-show="isConnected">
+      <div id="inputBlock" class="col-sm-4 col-xs-12">
+        <input type="text" class="form-control" placeholder="Subscribe.." ng-model="link" name="link" required="">
+      </div>
+      <div class="row">
+      <button type="button" class="btn col-sm-2 col-xs-6 btn-danger" ng-click="Unsubscribe()" ng-disabled="!isConnected">Unsubscribe</button>
+      <button type="button" class="btn col-sm-2 col-xs-6 btn-primary" ng-click="Subscribe()" ng-disabled="!isConnected">Subscribe</button>
+    </div>
+    </div>
+  </form>
+  <div class="errorMsgs">
+  <div style="color:green;" ng-show="!validateForm.UserId.$valid">Enter the UserId</div>
+  <div style="color:green;" ng-show="validateForm.UserId.$valid && !isConnected">Push the button "Connect"</div>
+ClientId: {{ClientObj.clientObject}} 
+</div>
+  </span>
+
+
+
+<!-- TABS -->
+<script type="text/javascript">
+$(document).ready(function(){
+    // firstly showing the first tab
+    $("#myTab2 li:eq(0) a").tab('show');
+});
+</script>
+<div ng-show="isConnected">
+<ul id="myTab2" class="nav nav-tabs">
+  <li><a data-toggle="tab" href="#panely1">Панель 1</a></li>
+  <li><a data-toggle="tab" href="#panely2">Панель 2</a></li>
+  <li><a data-toggle="tab" href="#panely3">Панель 3</a></li>
+</ul>
+<!--TABLES PART-->
+<div class="tab-content">
+  <div id="panely1" class="tab-pane fade in active">
+    <h3>Data Table</h3>
+    <table class=table>
+    <tr>
+      <th ng-repeat="(key, value) in myData[0]">{{key}}</th>
+    </tr>
+    <tr ng-repeat="x in myData">
+      <td ng-repeat="(key, value) in x">
+        {{value}}
+      </td>
+    </tr>
+    </table>
+  </div>
+  <div id="panely2" class="tab-pane fade">
+    <h3>Panel 2</h3>
+    <p>Content...</p>
+  </div>
+  <div id="panely3" class="tab-pane fade">
+    <h3>Panel 3</h3>
+    <p>Content...</p>
+  </div>
+</div>
+
+</div>
+<!--DEEPSEA PART-->
+<!--Example-->
+  
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+.errorMsgs {
+      height: 20px;
+    }
+
+.col-centered{
+float: none;
+margin: 0 auto;
+}
+
+ #page-preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #111;
+    z-index: 10000;
+}
+
+#page-preloader .spinner {
+    color: white;
+    font-size: 20px;
+    width: 120px;
+    height: 60px;
+    position: absolute;
+    margin: auto;
+    left: 50%;
+    top: 50%;
+    margin: -30px 0 0 -60px;
+}
+.loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 1px solid transparent;
+  border-radius: 80%;
+  border-top: 4px solid #3498db;
+  border-bottom: 4px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

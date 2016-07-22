@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="REST.Broker">
+<Super>%CSP.REST</Super>
+<TimeCreated>64118,50433.03431</TimeCreated>
+
+<XData name="UrlMap">
+<Data><![CDATA[
+<Routes>
+
+ <Route Url="/test" Method="GET" Call="Test"/>
+ <Route Url="/json/messages/:Table" Method="GET" Call="REST.JSON:GetAllMessages"/>
+ 
+ 
+ <Route Url="/json/connect/:ClientID" Method="GET" Call="REST.JSON:GetConnect"/>
+ <Route Url="/json/disconnect/:ClientObjectID" Method="GET" Call="REST.JSON:GetDisconnect"/>
+ <Route Url="/json/hasmore/:ClientObjectID" Method="GET" Call="REST.JSON:GetHasMore"/>
+ <Route Url="/json/publish/:ClientObjectID" Method="POST" Call="REST.JSON:PostPublish"/>
+ <Route Url="/json/subscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostSubscribe"/>
+ <Route Url="/json/unsubscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostUnsubscribe"/>
+ <Route Url="/json/messages/:ClientObjectID" Method="POST" Call="REST.JSON:PostMessages"/>
+ </Routes>
+]]></Data>
+</XData>
+
+<Method name="Test">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+    &html<Работает!>
+    quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

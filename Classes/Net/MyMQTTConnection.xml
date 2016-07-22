@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Net.MyMQTTConnection">
+<Super>%RegisteredObject</Super>
+<TimeCreated>64118,42072.323335</TimeCreated>
+
+<Method name="CreateConnection">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set ..client = ##class(Net.MQTT.Client).%New()
+	Set ..client.Host = "iot.eclipse.org"
+	Set ..client.ClientId = "client" _ $RANDOM(10000)
+	Set ..client.traceTarget = "^MQTT.Trace"
+	Set ..client.OnMessage = "Net.MQTT.BMClient:MyMessageHandler"
+	
+	Set sc = ..client.StartAgent() 
+	If ('sc) { 
+		Do $System.OBJ.DisplayError(sc) 
+		write !, "Can't create communication" 
+	}
+	
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="SendMessage">
+<FormalSpec>pContent:%String,pTopic:%String="/isctest/client/Test"</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set message = ##class(Net.MQTT.Message).%New()
+	Set message.Topic = pTopic
+	Set message.QoSLevel = 2
+	Set message.Content = pContent
+
+	Set sc = ..client.Publish(message) 
+	If ('sc) {
+		Do $System.OBJ.DisplayError(sc)
+		write !, "Can't send the message" 
+	}
+#;	ZWrite ^MQTT.Trace	
+
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="CloseConnection">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set sc = ..client.StopAgent() 
+	If ('sc) { 
+		Do $System.OBJ.DisplayError(sc) 
+		write !, "Can't close connection"
+	}
+	
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="Subscribe">
+<FormalSpec>pTopic:%String="/isctest/client/#"</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tpc = ##class(Net.MQTT.Message).%New()
+	Set tpc.Topic = pTopic
+	Set tpc.QoSLevel = 2
+	Set topics = ##class(%ListOfObjects).%New()
+	Do topics.Insert(tpc)
+	Set ..myTopic = topics
+	
+	Set sc = ..client.Subscribe(.topics)
+	If ('sc) {
+		Do $System.OBJ.DisplayError(sc)
+		write !, "Can't subscribe topic"
+		return sc
+	}
+	If (''sc) {
+		Set t=topics.GetAt(1)
+		Write "Topic:'"_t.Topic_"'; Expected QoS:"_t.QoSLevel_"; Granted QoS:"_t.GrantedQoS_";", ! 
+	}
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="Unsubscribe">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set topics = ..myTopic
+	
+	Set sc = ..client.Unsubscribe(.topics)
+	If ('sc) {
+		Do $System.OBJ.DisplayError(sc)
+		return sc
+	}
+	
+	Set sc = ..client.StopAgent()
+	If ('sc) {
+		Do $System.OBJ.DisplayError(sc)
+	}
+	
+	set ..myTopic = ""
+	return sc
+#;	ZWrite ^MQTT.Trace
+]]></Implementation>
+</Method>
+
+<Method name="TestStore">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+	set jstring = "{""accuracy"":11, ""values"":[1, 2, 3], ""name"":""namestr""}"
+	
+	set newObject = ##class(%AbstractObject).$fromJSON(jstring)
+	
+	set s = ##class(Net.MQTT.Aux.Storege).%New()
+	set s.DeviceID = "sdfsfsddf"
+	set s.CreatedAt = $p($h, ",", 1)
+	set s.SensorType = newObject.name
+	set s.Value1 = newObject.values.$get(0)
+	set s.Value2 = newObject.values.$get(1)
+	set s.Value3 = newObject.values.$get(2)
+	}
+		CATCH ex {
+		Set tSC = ex.AsStatus()
+	}
+	
+	return s.%Save()
+]]></Implementation>
+</Method>
+
+<Property name="client">
+<Type>Net.MQTT.Client</Type>
+</Property>
+
+<Property name="myTopic">
+<Type>%ListOfObjects</Type>
+</Property>
+</Class>
+</Export>

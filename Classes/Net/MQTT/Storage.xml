@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Net.MQTT.Storage">
+<Super>%Persistent,%Populate</Super>
+<TimeCreated>64120,39481.998143</TimeCreated>
+
+<Property name="DeviceID">
+<Type>%String</Type>
+</Property>
+
+<Property name="SensorType">
+<Type>%String</Type>
+</Property>
+
+<Property name="CreatedAt">
+<Type>%DateTime</Type>
+</Property>
+
+<Property name="Value1">
+<Type>%Double</Type>
+</Property>
+
+<Property name="Value2">
+<Type>%Double</Type>
+</Property>
+
+<Property name="Value3">
+<Type>%Double</Type>
+</Property>
+</Class>
+</Export>

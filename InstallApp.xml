@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1 (Build 656U)" ts="2016-07-24 23:22:12">
+<Class name="MQTT.InstallApp">
+<TimeChanged>64122,39383.743856</TimeChanged>
+<TimeCreated>64122,39016.750571</TimeCreated>
+
+<XData name="Install">
+<XMLNamespace>INSTALLER</XMLNamespace>
+<Data><![CDATA[
+<Manifest>
+<IfNotDef Var="Namespace">
+<Var Name="Namespace" Value="MQTT"/>
+<Log Text="Set namespace to ${Namespace}" Level="0"/>
+</IfNotDef>
+
+
+<Namespace Name="${Namespace}" Create="no">
+<If Condition='(##class(Security.Applications).Exists("/mqttWeb")=0)'>
+  <Log Text="Creating web application /mqttWeb" Level="0"/>
+  <!-- This method creates conflits with web-server. Kept for reference purposes. See ##class(%EnsembleMgr).createPortalApp()
+  <CSPApplication Url="/mqttWeb" Directory="" AuthenticationMethods="64" IsNamespaceDefault="false" />-->
+  <RunInstall Class="Install.Test" Method="CreateWebAppMQTTWeb"/>
+ </If>
+ <If Condition='(##class(Security.Applications).Exists("/rest")=0)'>
+  <Log Text="Creating web application /rest" Level="0"/>
+  <!-- This method creates conflits with web-server. Kept for reference purposes. See ##class(%EnsembleMgr).createPortalApp()
+  <CSPApplication Url="/rest" Directory="" AuthenticationMethods="64" IsNamespaceDefault="false" />-->
+  <RunInstall Class="Install.Test" Method="CreateWebAppREST"/>
+ </If> 
+</Namespace>
+
+<!--<RunInstall Class="Install.Test" Method="CreateWebApp" />-->
+</Manifest>
+]]></Data>
+</XData>
+
+<Method name="setup">
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<FormalSpec><![CDATA[&pVars,pLogLevel:%Integer=0,pInstaller:%Installer.Installer]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[ 	Quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
+]]></Implementation>
+</Method>
+
+<Method name="CreateWebAppREST">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set Namespace=tInstaller.Evaluate("${Namespace}")
+	Do tInstaller.PushNS("%SYS")
+	Do ##class(Security.System).GetInstallationSecuritySetting(.security)
+	If (security="None") {
+		Set cspProperties("AutheEnabled") = $$$AutheUnauthenticated
+	} Else {
+		Set cspProperties("AutheEnabled") = $$$AutheCache // Password
+	}
+	Set cspProperties("NameSpace") = Namespace
+	Set cspProperties("IsNameSpaceDefault") = $$$NO
+	Set cspProperties("DispatchClass") = "REST.Broker"
+	Set tSC = ##class(Security.Applications).Create("/rest", .cspProperties)
+	Do tInstaller.PopNS()
+	If $$$ISERR(tSC) Throw ##class(%Installer.Exception).CreateFromStatus(tSC)
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="CreateWebAppMQTTWeb">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set Namespace=tInstaller.Evaluate("${Namespace}")
+	Do tInstaller.PushNS("%SYS")
+	Do ##class(Security.System).GetInstallationSecuritySetting(.security)
+	If (security="None") {
+		Set cspProperties("AutheEnabled") = $$$AutheUnauthenticated
+	} Else {
+		Set cspProperties("AutheEnabled") = $$$AutheCache // Password
+	}
+	Set cspProperties("NameSpace") = Namespace
+	Set cspProperties("IsNameSpaceDefault") = $$$NO
+	Set cspProperties("DeepSeeEnabled") = $$$YES
+	Set tSC = ##class(Security.Applications).Create("/mqttWeb", .cspProperties)
+	Do tInstaller.PopNS()
+	If $$$ISERR(tSC) Throw ##class(%Installer.Exception).CreateFromStatus(tSC)
+	Quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

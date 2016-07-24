@@ -1,9 +1,59 @@
+body {
+  background-color: #eee;
+}
+
+.modal-header {
+  -moz-border-radius: 4px 4px 0 0; /* Firefox */
+  -webkit-border-radius: 4px 4px 0 0; /* Safari, Chrome */
+  -khtml-border-radius: 4px 4px 0 0; /* KHTML */
+  border-radius: 4px 4px 0 0; /* CSS3 */
+  /* For very bed IE */
+  behavior: url(border-radius.htc);
+  border-width: 0;
+}
+.modal-error {
+  background-color: #d9534f;
+}
+.modal-info {
+  background-color: #428bca;
+}
+.modal-warning {
+  background-color: #f0ad4e;
+}
+
+.glow {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 0%;
+  margin: 0 0 0 -50%;
+  box-shadow: 0 0 200px 5px #aaa;
+}
 .errorMsgs {
   height: 20px; }
 
 .col-centered {
   float: none;
   margin: 0 auto; }
+
+.parent {
+  width: 100%;
+  height: 100%;
+  display: table;
+  position: absolute;
+  top: 0;
+  left: 0; }
+  .parent > .inner {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle; }
+
+.block {
+  display: inline-block; }
+  .block img {
+    display: block;
+    border: none; }
 
 #page-preloader {
   position: fixed;
@@ -12,7 +62,17 @@
   right: 0;
   bottom: 0;
   background: #111;
-  z-index: 10000; }
+  z-index: 10001; }
+
+  #window-area {
+    position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: #111;
+    z-index: 10000;
+  }
 
 #page-preloader .spinner {
   color: white;

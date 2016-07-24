@@ -2,9 +2,26 @@
       height: 20px;
     }
 
-.col-centered{
-float: none;
-margin: 0 auto;
+.dark {
+    background-color: #111; /* Цвет фона веб-страницы */
+}
+
+.parent {
+    width: 100%;
+    height: 100%;
+    display: table;
+    position: absolute;
+    top: 0;
+    left: 0;
+    > .inner {
+        display: table-cell;
+        text-align: center;
+        vertical-align: middle;
+    }
+}
+
+.block {
+    display: inline-block;
 }
 
  #page-preloader {
@@ -55,3 +72,8 @@ margin: 0 auto;
   100% { transform: rotate(360deg); }
 }
 
+
+@keyframes show-window {
+  0% { opacity: 0%; }
+  100% { opacity: 100%; visibility: hidden;}
+}

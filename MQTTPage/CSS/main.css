@@ -33,10 +33,6 @@ body {
 .errorMsgs {
   height: 20px; }
 
-.col-centered {
-  float: none;
-  margin: 0 auto; }
-
 .parent {
   width: 100%;
   height: 100%;
@@ -48,12 +44,6 @@ body {
     display: table-cell;
     text-align: center;
     vertical-align: middle; }
-
-.block {
-  display: inline-block; }
-  .block img {
-    display: block;
-    border: none; }
 
 #page-preloader {
   position: fixed;

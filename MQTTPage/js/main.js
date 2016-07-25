@@ -43,7 +43,8 @@ app.controller('MQTTCtrl', function($scope, $http) {
         return false;
       }
       $scope.isConnected = true;
-      $scope.ClientObj = data;
+      $scope.ClientId = data.clientObject;
+      $scope.Subscribe($scope.Topics)
       var $winArea = $('#window-area');
       $winArea.delay(100).fadeOut('slow');
     }).error(function(data, status, header, config) {
@@ -67,10 +68,16 @@ app.controller('MQTTCtrl', function($scope, $http) {
       $scope.ShowNotice('Disconnection error', data.error, 3);
     });
   }
+  $scope.OpenSubscribeMolad = function() {
+    $('#SubscribeModal').modal('show');
+  }
+  $scope.OpenSendMessageModal = function() {
+    $('#SendMessageModal').modal('show');
+  }
   // Subscribe
-  $scope.Subscribe = function() {
+  $scope.Subscribe = function(topics) {
     // Getting array of topics
-    var topics = $scope.link.split(", ");
+    var topics = topics.split(", ");
     var dataObjs = new Array();
     for (var i=0; i<topics.length; i++) {
       dataObjs.push({"topicFilter": topics[i], "qos": "2"})
@@ -78,7 +85,7 @@ app.controller('MQTTCtrl', function($scope, $http) {
     $http({
       method: 'POST',
       headers: "",//{ 'Content-Type': 'application/json' },
-      url: "../../rest/json/subscribe/" + $scope.ClientObj.clientObject,
+      url: "../../rest/json/subscribe/" + $scope.ClientId,
       data: dataObjs
     }).success(function(data, status, header, config) {
       if (!data.success) {
@@ -116,6 +123,28 @@ app.controller('MQTTCtrl', function($scope, $http) {
       $scope.ShowNotice('Subscribe', 'Unubscribe successfully complete! \nYou are unsubscribed to: ' + $scope.link + ".");
     }).error(function(data, status, header, config) {
       $scope.ShowNotice('Unsubscribe error', data.error, 3);
+    });
+  }
+
+  $scope.PublishMessage = function() {
+    // Getting array of topics
+    $http({
+      method: 'POST',
+      headers: "",//{ 'Content-Type': 'application/json' },
+      url: "../../rest/json/subscribe/" + $scope.ClientId,
+      data: $scope.sendMessageForm.meslink.value;
+    }).success(function(data, status, header, config) {
+      if (!data.success) {
+        $scope.ShowNotice('Subscribe error', data.error, 3);
+        return false;
+      }
+      var bufstr = data.topics[0].topicFilter;
+      for (var i=1; i<data.topics.length; i++) {
+        bufstr += ", " + data.topics[i].topicFilter;
+      }
+      $scope.ShowNotice('Subscribe', 'Subscribe successfully complete! \nYou are subscribed to: ' + bufstr + ".");
+    }).error(function(data, status, header, config) {
+      $scope.ShowNotice('Subscribe error', data.error, 3);
     });
   }
 

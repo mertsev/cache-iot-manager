@@ -28,7 +28,6 @@
   <div ng-app="MQTTApp" ng-controller="MQTTCtrl">
     <span class="ng-app">
 
-
       <!-- Notice modal -->
       <div class="modal fade" id="NoticeModal" role="dialog">
         <div class="modal-dialog">
@@ -47,16 +46,78 @@
         </div>
       </div>
 
+      <!-- Subscribe modal -->
+      <div class="modal fade" id="SubscribeModal" role="dialog">
+        <div class="modal-dialog" style="margin:auto;">
 
+          <!-- Subscribe modal content-->
+          <div class="modal-content">
+            <div class="modal-header modal-input">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Subscription</h4>
+            </div>
+            <div class="modal-body">
+              <form name="subscribeForm">
+                <div class="form-group">
+                  <label for="link" class="control-label">Topics:</label>
+                  <input type="text" id="link" class="form-control" placeholder="Subscribe.." ng-model="link" name="link"  required>
+                </div>
+                <div class="form-group">
+                  <label for="QoSSubscribe" class="control-label">Qos(1-3):</label>
+                  <input type="number" min="1" max="3" id="QoSSubscribe" class="form-control col-xs-2 modal-input" placeholder="QoS.." ng-model="QoSSubscribe" name="QoSSubscribe" required>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" ng-click="Unsubscribe()" ng-disabled="!isConnected || !subscribeForm.link.$valid" data-dismiss="modal" style="margin:0;">Unsubscribe</button>
+                <button type="button" class="btn btn-primary" ng-click="Subscribe(subscribeForm.link.value)" ng-disabled="!isConnected || !subscribeForm.$valid" data-dismiss="modal" style="margin:0;">Subscribe</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SendMessage modal -->
+      <div class="modal fade" id="SendMessageModal" role="dialog">
+        <div class="modal-dialog" style="margin:auto;">
+
+          <!-- SendMessage modal content-->
+          <div class="modal-content">
+            <div class="modal-header modal-input">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Sending Message</h4>
+            </div>
+            <div class="modal-body">
+              <form name="sendMessageForm">
+                <div class="form-group">
+                  <label for="meslink" class="control-label">Topic:</label>
+                  <input type="text" class="form-control" id="meslink" placeholder="Subscribe.." ng-model="meslink" name="meslink" required>
+                </div>
+                <div class="form-group">
+                  <label for="messagetext" class="control-label">Message:</label>
+                  <textarea class="form-control" id="messagetext" ng-model="messagetext" name="messagetext"  required></textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" ng-click="SendMessage()" ng-disabled="!isConnected || !sendMessageForm.meslink.$valid" data-dismiss="modal" style="margin:0;">Unsubscribe</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!--Connect Form-->
       <div id="window-area" class="navbar-collapse parent">
         <form class="navbar-form inner" name="validateForm" id="validateForm" ng-submit="Connect()">
         <!--Connect-->
           <input type="text" class="form-control" placeholder="UserId.." ng-model="UserId" name="UserId" ng-show="!isConnected" autofocus required>
-          <button type="button" class="btn form-control btn-success" ng-click="Connect()" ng-disabled="!validateForm.UserId.$valid" ng-show="!isConnected">Connect</button>
+          <input type="text" class="form-control" placeholder="Topics.." ng-model="Topics" name="Topics" ng-show="!isConnected" required>
+          <button type="button" class="btn form-control btn-success" ng-click="Connect()" ng-disabled="!validateForm.$valid" ng-show="!isConnected">Connect</button>
           <div class="glow"> </div>
           <div class="errorMsgs">
-            <div style="color:green;" ng-show="!validateForm.UserId.$valid">Enter the UserId</div>
-            <div style="color:green;" ng-show="validateForm.UserId.$valid && !isConnected">Push the button "Connect"</div>
+            <div style="color:green;" ng-show="!validateForm.$valid">Enter the UserId and Topics</div>
+            <div style="color:green;" ng-show="validateForm.$valid && !isConnected">Push the button "Connect"</div>
             <p style="color:red;" ng-show="!isConnected">{{ErrMessages}}</p>
           </div>
         </form>
@@ -78,16 +139,11 @@
 
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <!--Subscribe-->
-              <ul class="nav navbar-nav navbar-btn navbar-left">
-                <div class="navbar-left col-sm-6 col-xs-12" style="padding:0;">
-                    <input type="text" class="form-control" placeholder="Subscribe.." ng-model="link" name="link" required>
-                </div>
-                <button type="button" class="btn col-sm-3 col-xs-6 btn-danger" ng-click="Unsubscribe()" ng-disabled="!isConnected">Unsubscribe</button>
-                <button type="button" class="btn col-sm-3 col-xs-6 btn-primary" ng-click="Subscribe()" ng-disabled="!isConnected">Subscribe</button>
+              <ul class="nav navbar-nav navbar-btn">
+                <button type="button" class="btn col-xs-12 btn-primary" ng-click="OpenSubscribeMolad()">Subscription</button>
               </ul>
-              
-              <ul class="nav navbar-nav">
-                <button type="button" class="btn navbar-btn col-xs-12 btn-primary" ng-click="GetMessages()">Test</button>
+              <ul class="nav navbar-nav navbar-btn">
+                <button type="button" class="btn col-xs-12 btn-primary" ng-click="OpenSendMessageModal()">Send Message</button>
               </ul>
             <!--Disconnect-->
               <ul class="nav navbar-nav navbar-right">
@@ -100,13 +156,17 @@
     </span>
 
     <!-- TABS -->
-    <h2>DataTables</h2>
-    <div class="row well well-sm" ng-show="isConnected">
+    <h2 ng-show="isConnected">DataTables</h2>
+    <div class="row well well-sm" ng-show="isConnected" style="min-height: 50px;">
       <ul id="Tabs" class="nav nav-tabs">
         <li ng-repeat="(k, tableData) in myData"><a data-toggle="tab" href="#{{k}}">{{k}}</a></li>
+              <button type="button" class="btn" style="float:right;" data-toggle="tab" data-target="#Empty">
+                <span class="glyphicon glyphicon-menu-hamburger"></span>
+              </button>
       </ul>
     <!-- PANELS -->
       <div class="tab-content pre-scrollable">
+      <div id="Empty" class="tab-pane fade"></div>
         <div id={{k}} class="tab-pane fade" ng-repeat="(k, tableData) in myData">
           <table class="table table-striped table-hover">
             <thead>
@@ -128,7 +188,7 @@
     </div>
 
   <!--DEEPSEE PART-->
-  <h2>DeepSee dashboard</h2>
+  <h2 ng-show="isConnected">DeepSee dashboard</h2>
   <div class="row well well-sm pre-scrollable" ng-show="isConnected">
     <iframe width="100%" class="embed-responsive-item" src=""></iframe>
   </div>

@@ -1,29 +1,16 @@
 Class REST.Broker Extends %CSP.REST
 {
 
-XData UrlMap
+XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 {
 <Routes>
-
- <Route Url="/test" Method="GET" Call="Test"/>
- <Route Url="/json/messages/:Table" Method="GET" Call="REST.JSON:GetAllMessages"/>
- 
- 
- <Route Url="/json/connect/:ClientID" Method="GET" Call="REST.JSON:GetConnect"/>
- <Route Url="/json/disconnect/:ClientObjectID" Method="GET" Call="REST.JSON:GetDisconnect"/>
- <Route Url="/json/hasmore/:ClientObjectID" Method="GET" Call="REST.JSON:GetHasMore"/>
- <Route Url="/json/lastmessage/" Method="GET" Call="REST.JSON:GetLastMessage"/>
- <Route Url="/json/publish/:ClientObjectID" Method="POST" Call="REST.JSON:PostPublish"/>
- <Route Url="/json/subscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostSubscribe"/>
- <Route Url="/json/unsubscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostUnsubscribe"/>
- <Route Url="/json/messages/:ClientObjectID" Method="POST" Call="REST.JSON:PostMessages"/>
+ <Route Url="/json/connect/:ClientID" Method="GET" Call="REST.JSON:GetConnect" Cors="true"/>
+ <Route Url="/json/disconnect/:ClientObjectID" Method="GET" Call="REST.JSON:GetDisconnect" Cors="true"/>
+ <Route Url="/json/lastmessages/" Method="GET" Call="REST.JSON:GetLastMessages" Cors="true"/>
+ <Route Url="/json/publish/:ClientObjectID" Method="POST" Call="REST.JSON:PostPublish" Cors="true"/>
+ <Route Url="/json/subscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostSubscribe" Cors="true"/>
+ <Route Url="/json/unsubscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostUnsubscribe" Cors="true"/>
  </Routes>
-}
-
-ClassMethod Test() As %Status
-{
-    &html<Работает!>
-    quit $$$OK
 }
 
 }

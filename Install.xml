@@ -1,30 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1.1 (Build 107U)" ts="2016-07-23 18:01:23">
-<Project name="MQTTFRAMEWORK" LastModified="2016-07-23 18:01:07.599481">
-  <Items>
-    <ProjectItem name="MQTTOptions.INC" type="MAC"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Agent" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Aux.MessageCounter" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Aux.MessageStatus" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Aux.Subscription" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Aux.SubscriptionTopic" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Aux.TaskList" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.BMClient" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Client" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Message" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.MessageStore" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MQTT.Storage" type="CLS"></ProjectItem>
-    <ProjectItem name="Net.MyMQTTConnection" type="CLS"></ProjectItem>
-    <ProjectItem name="REST.Broker" type="CLS"></ProjectItem>
-    <ProjectItem name="REST.JSON" type="CLS"></ProjectItem>
-    <ProjectItem name="Src.Utils.Macro.INC" type="MAC"></ProjectItem>
-    <ProjectItem name="Util.SourceControl" type="CLS"></ProjectItem>
-  </Items>
-</Project>
-
-
-<Routine name="MQTTOptions" type="INC" timestamp="64121,63040.355113"><![CDATA[
-#; General#define MQTTTraceIN(%type,%msg)		$$$MQTTTrace(%type,"I",%msg)#define MQTTTraceOUT(%type,%msg)	$$$MQTTTrace(%type,"O",%msg)#define MQTTTraceINF(%msg)			$$$MQTTTrace("INFO","S",%msg)#define MQTTTraceERR(%msg)			$$$MQTTTrace("ERROR","S",%msg)#define MQTTTrace(%type,%dir,%msg)	Set:(..trace) var=..traceTarget,@var@($I(@var),$ZDT($ZU(188),3,1,3),%dir,$Case(%type,"":"UNKNOWN",:%type))=%msg#define MQTTEncodeNumber(%num)		$Reverse($ZWChar(%num))#define MQTTDecodeNumber(%str)		$ZWAscii($Reverse(%str))#; Fixed header#define MQTTRetain			1#define MQTTQoS1			2#define MQTTQoS2			4#define MQTTDup				8#; Message types#define MQTTCONNECT			16#define MQTTCONNACK			32#define MQTTPUBLISH			48#define MQTTPUBACK			64#define MQTTPUBREC			80#define MQTTPUBREL			96#define MQTTPUBCOMP			112#define MQTTSUBSCRIBE		128#define MQTTSUBACK			144#define MQTTUNSUBSCRIBE		160#define MQTTUNSUBACK		176#define MQTTPINGREQ			192#define MQTTPINGRESP		208#define MQTTDISCONNECT		224#define MQTTMsgType(%code)	$Case(%code,$$$MQTTCONNECT:"CONNECT",$$$MQTTCONNACK:"CONNACK",$$$MQTTPUBLISH:"PUBLISH",$$$MQTTPUBACK:"PUBACK",$$$MQTTPUBREC:"PUBREC",$$$MQTTPUBREL:"PUBREL",$$$MQTTPUBCOMP:"PUBCOMP",$$$MQTTSUBSCRIBE:"SUBSCRIBE",$$$MQTTSUBACK:"SUBACK",$$$MQTTUNSUBSCRIBE:"UNSUBSCRIBE",$$$MQTTUNSUBACK:"UNSUBACK",$$$MQTTPINGREQ:"PINGREQ",$$$MQTTPINGRESP:"PINGRESP",$$$MQTTDISCONNECT:"DISCONNECT",:"Unkown")#; CONNECT#define MQTTCleanSession	2#define MQTTWillFlag		4#define MQTTWillQoS1		8#define MQTTWillQoS2		16#define MQTTWillRetain		32#define MQTTPasswordFlag	64#define MQTTUsernameFlag	128#; SUBSCRIBE#define MQTTSubQoS1			1#define MQTTSubQoS2			2			
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1.1 (Build 107U)" ts="2016-07-25 17:25:59">
+<Routine name="MQTTOptions" type="INC" timestamp="64124,42148.734469"><![CDATA[
+#; General
+#define MQTTTraceIN(%type,%msg)		$$$MQTTTrace(%type,"I",%msg)
+#define MQTTTraceOUT(%type,%msg)	$$$MQTTTrace(%type,"O",%msg)
+#define MQTTTraceINF(%msg)			$$$MQTTTrace("INFO","S",%msg)
+#define MQTTTraceERR(%msg)			$$$MQTTTrace("ERROR","S",%msg)
+#define MQTTTrace(%type,%dir,%msg)	Set:(..trace) var=..traceTarget,@var@($I(@var),$ZDT($ZU(188),3,1,3),%dir,$Case(%type,"":"UNKNOWN",:%type))=%msg
+#define MQTTEncodeNumber(%num)		$Reverse($ZWChar(%num))
+#define MQTTDecodeNumber(%str)		$ZWAscii($Reverse(%str))
+#; Fixed header
+#define MQTTRetain			1
+#define MQTTQoS1			2
+#define MQTTQoS2			4
+#define MQTTDup				8
+#; Message types
+#define MQTTCONNECT			16
+#define MQTTCONNACK			32
+#define MQTTPUBLISH			48
+#define MQTTPUBACK			64
+#define MQTTPUBREC			80
+#define MQTTPUBREL			96
+#define MQTTPUBCOMP			112
+#define MQTTSUBSCRIBE		128
+#define MQTTSUBACK			144
+#define MQTTUNSUBSCRIBE		160
+#define MQTTUNSUBACK		176
+#define MQTTPINGREQ			192
+#define MQTTPINGRESP		208
+#define MQTTDISCONNECT		224
+#define MQTTMsgType(%code)	$Case(%code,$$$MQTTCONNECT:"CONNECT",$$$MQTTCONNACK:"CONNACK",$$$MQTTPUBLISH:"PUBLISH",$$$MQTTPUBACK:"PUBACK",$$$MQTTPUBREC:"PUBREC",$$$MQTTPUBREL:"PUBREL",$$$MQTTPUBCOMP:"PUBCOMP",$$$MQTTSUBSCRIBE:"SUBSCRIBE",$$$MQTTSUBACK:"SUBACK",$$$MQTTUNSUBSCRIBE:"UNSUBSCRIBE",$$$MQTTUNSUBACK:"UNSUBACK",$$$MQTTPINGREQ:"PINGREQ",$$$MQTTPINGRESP:"PINGRESP",$$$MQTTDISCONNECT:"DISCONNECT",:"Unknown")
+#; CONNECT
+#define MQTTCleanSession	2
+#define MQTTWillFlag		4
+#define MQTTWillQoS1		8
+#define MQTTWillQoS2		16
+#define MQTTWillRetain		32
+#define MQTTPasswordFlag	64
+#define MQTTUsernameFlag	128
+#; SUBSCRIBE
+#define MQTTSubQoS1			1
+#define MQTTSubQoS2			2			
 ]]></Routine>
 
 
@@ -1567,7 +1583,7 @@ Auxiliary class is used only internally by a <class>Net.MQTT.Client</class> and 
 Auxiliary class is used only internally by a <class>Net.MQTT.Client</class> and its <class>Net.MQTT.Agent</class>.
 <p>Provides the topic list, which the primary content of <b><var>SUBSCRIBE</var></b> and <b><var>UNSUBSCRIBE</var></b> messages.</p>]]></Description>
 <Super>%Persistent</Super>
-<TimeChanged>64072,54267.846928</TimeChanged>
+<TimeChanged>64124,62203.787433</TimeChanged>
 <TimeCreated>64050,80453.857656</TimeCreated>
 
 <Index name="TopicKey">
@@ -1590,7 +1606,7 @@ Auxiliary class is used only internally by a <class>Net.MQTT.Client</class> and 
 
 <Property name="QoSLevel">
 <Type>%Integer</Type>
-<Required>1</Required>
+<InitialExpression>0</InitialExpression>
 <Parameter name="VALUELIST" value=",0,1,2"/>
 </Property>
 
@@ -2947,94 +2963,68 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
 
 <Class name="REST.Broker">
 <Super>%CSP.REST</Super>
-<TimeChanged>64121,57825.834363</TimeChanged>
+<TimeChanged>64124,55474.275888</TimeChanged>
 <TimeCreated>64118,50433.03431</TimeCreated>
 
 <XData name="UrlMap">
+<XMLNamespace>http://www.intersystems.com/urlmap</XMLNamespace>
 <Data><![CDATA[
 <Routes>
-
- <Route Url="/test" Method="GET" Call="Test"/>
- <Route Url="/json/messages/:Table" Method="GET" Call="REST.JSON:GetAllMessages"/>
- 
- 
- <Route Url="/json/connect/:ClientID" Method="GET" Call="REST.JSON:GetConnect"/>
- <Route Url="/json/disconnect/:ClientObjectID" Method="GET" Call="REST.JSON:GetDisconnect"/>
- <Route Url="/json/hasmore/:ClientObjectID" Method="GET" Call="REST.JSON:GetHasMore"/>
- <Route Url="/json/lastmessage/" Method="GET" Call="REST.JSON:GetLastMessage"/>
- <Route Url="/json/publish/:ClientObjectID" Method="POST" Call="REST.JSON:PostPublish"/>
- <Route Url="/json/subscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostSubscribe"/>
- <Route Url="/json/unsubscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostUnsubscribe"/>
- <Route Url="/json/messages/:ClientObjectID" Method="POST" Call="REST.JSON:PostMessages"/>
+ <Route Url="/json/connect/:ClientID" Method="GET" Call="REST.JSON:GetConnect" Cors="true"/>
+ <Route Url="/json/disconnect/:ClientObjectID" Method="GET" Call="REST.JSON:GetDisconnect" Cors="true"/>
+ <Route Url="/json/lastmessages/" Method="GET" Call="REST.JSON:GetLastMessages" Cors="true"/>
+ <Route Url="/json/publish/:ClientObjectID" Method="POST" Call="REST.JSON:PostPublish" Cors="true"/>
+ <Route Url="/json/subscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostSubscribe" Cors="true"/>
+ <Route Url="/json/unsubscribe/:ClientObjectID" Method="POST" Call="REST.JSON:PostUnsubscribe" Cors="true"/>
  </Routes>
 ]]></Data>
 </XData>
-
-<Method name="Test">
-<ClassMethod>1</ClassMethod>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-    &html<Работает!>
-    quit $$$OK
-]]></Implementation>
-</Method>
 </Class>
 
 
 <Class name="REST.JSON">
 <Super>%Base</Super>
-<TimeChanged>64121,59245.356919</TimeChanged>
+<TimeChanged>64124,62312.908886</TimeChanged>
 <TimeCreated>64118,52495.950387</TimeCreated>
-
-<Method name="GetAllMessages">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>Table:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-    
-   set st=$$$OK
-   try {    
-   do ##class(%ZEN.Auxiliary.jsonSQLProvider).%WriteJSONFromSQL(,"select * from " _ Table)
-   } catch ex {
-       set st=ex.AsStatus()
-   }
-   quit st
-]]></Implementation>
-</Method>
 
 <Method name="GetConnect">
 <ClassMethod>1</ClassMethod>
 <FormalSpec>ClientID:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set st=$$$OK
+	set status=$$$OK
+	// Definition of dynamic json object
+	set object = ##class(%Object).$new()
    try { 
    
-   // Defining a message
-   Set message = ##class(Net.MQTT.Message).%New()
-   Set message.Topic = "/isctest/client/rest"
-   Set message.Content = "GetConnect method is working!" _ " ClientID is " _ ClientID
-   Set message.QoSLevel = 2
-   
-   // Defining a client and sending a message to mqtt
+   // Defining and saving the client
    set client = ##class(Net.MQTT.Client).%New()
    set client.Host = "iot.eclipse.org"
    set client.ClientId = ClientID
-   set sc = client.StartAgent() 
-   Set sc = client.Publish(message)
+   set client.traceTarget = "^MQTT.Trace"
+   If $$$ISOK(status) {
+    // Starting the agent
+   	set status = client.StartAgent() 
+   }
    set status = client.%Save()
-   
-   // Creation of dynamic object and producement of a JSON
-   set object = ##class(%Object).$new()
-   set object.success = 1
-   set object.error = "if any"
-   set object.clientObject = ClientID
-   write object.$toJSON()
-   
-   } catch ex {
-	   set st=ex.AsStatus()
+ 
+   // Producement of a JSON (success)
+   If $$$ISOK(status) {
+    do object.$set("success", 1, "boolean")
+    set object.clientObject = client.%Id()
+   }
 	   }
-   quit st
+	   catch ex {
+	   set status = ex.AsStatus()	
+	   }
+	   // Producement of a JSON (fail)
+	   if $$$ISERR(status) 
+	   {
+  		do object.$set("success", 0, "boolean")
+  		Set object.error = $System.Status.GetErrorText(status)
+  		}
+	write object.$toJSON()
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -3043,24 +3033,43 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
 <FormalSpec>ClientObjectID:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set st=$$$OK
+	set status=$$$OK
+	// Definition of dynamic json object
+	set object = ##class(%Object).$new()
    try { 
    
    // Opening a client from DB and stopping the agent
    set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .st)
-   set sc = client.StopAgent()
+   set status = client.StopAgent()
+   // Producement of a JSON (fail)
+   If $$$ISERR(status) {
+   	do object.$set("success", 0, "boolean")
+   	Set object.error = $System.Status.GetErrorText(status)
+   }
    
-   // Creation of dynamic object and producement of a JSON
-   set object = ##class(%Object).$new()
-   set object.success = 1
-   set object.error = "if any"
-   write object.$toJSON()
-   
-   } catch ex {
-	   set st=ex.AsStatus()
-	   w st
-	   }
-   quit st
+   // Deleting a client
+   set status = ##class(Net.MQTT.Client).%DeleteId(ClientObjectID)
+   // Producement of a JSON (fail)
+   If $$$ISERR(status) {
+   	do object.$set("success", 0, "boolean")
+   	Set object.error = $System.Status.GetErrorText(status)
+   }
+  
+   // Producement of a JSON (success)
+   If $$$ISOK(status) {
+    do object.$set("success", 1, "boolean")
+   }
+   		} 
+   		catch ex {
+	   	set status=ex.AsStatus()
+	   	}
+	   	// Producement of a JSON (fail)
+	   	if $$$ISERR(status) {
+  		do object.$set("success", 0, "boolean")
+ 		Set object.error = $System.Status.GetErrorText(st)
+	  	}
+	write object.$toJSON()
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -3069,49 +3078,67 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
 <FormalSpec>ClientObjectID:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set st=$$$OK
+	set status=$$$OK
+	// Definition of dynamic json object
+	set object = ##class(%Object).$new()
    try {
    
    // Getting content data
    set obj = %request.Content.Read($$$MaxStringLength)
    
    // Opening a client from DB
-   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .st)
+   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .status)
+   // Producement of a JSON (fail)
+   if $$$ISERR(status) {
+	   do object.$set("success", 0, "boolean")
+	   Set object.error = $System.Status.GetErrorText(status)
+	   }
    
    // Defining mqtt message class and list of mqtt objects
    Set tpc = ##class(Net.MQTT.Message).%New()
    Set topics = ##class(%ListOfObjects).%New()
    
-   // Creation of abstract object and creation of a subscription
+   // Creation of an abstract object and a subscription
    set JSON = ##class(%AbstractObject).$fromJSON(obj)
    for x=0:1:(JSON.$size()-1){
 	   set tpc.Topic = JSON.$get(x).topicFilter
 	   set tpc.QoSLevel = JSON.$get(x).qos
 	   Do topics.Insert(tpc)
 	   }
-	   set sc = client.Subscribe(.topics)
-    
-   // Creation of dynamic object and producement of a JSON
-   set object = ##class(%Object).$new()
-   set object.success = 1
-   set object.error = ""
+	   set status = client.Subscribe(.topics)
+	   // Producement of a JSON (fail)
+	   if $$$ISERR(status) {
+  		do object.$set("success", 0, "boolean")
+  		Set object.error = $System.Status.GetErrorText(status)
+	  	}
+
    set topicArray = ##class(%Array).$new()
    //Making topics list parseable to JSON
-   for x=0:1:(topics.Count()){
+   for x=1:1:(topics.Count()){
 	   set topicget = topics.GetAt(x)
 	   set topicobject = ##class(%Object).$new()
 	   set topicobject.topicFilter = topicget.Topic
 	   set topicobject.qos = topicget.QoSLevel
 	   do topicArray.$push(topicobject)
 	   }
+   // Producement of a JSON (success)
+   If $$$ISOK(status) {
+    do object.$set("success", 1, "boolean")
+   }
    set object.topics = topicArray
-   write object.$toJSON()
-	 
+  
  
-   } catch ex {
-       set st=ex.AsStatus()
-}
-	quit st
+   		} catch ex {
+       	set status=ex.AsStatus()
+       	}
+	   	if $$$ISERR(status) {
+  		// Creation of dynamic object and producement of a JSON (fail)
+  		do object.$set("success", 0, "boolean")
+  		Set object.error = $System.Status.GetErrorText(status)
+		}
+	// Producement of a JSON (success)
+	write object.$toJSON()
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -3120,31 +3147,53 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
 <FormalSpec>ClientObjectID:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set st=$$$OK
+	set status=$$$OK
+	// Definition of dynamic json object
+	set object = ##class(%Object).$new()
    try { 
    
    // Getting content data
    set obj = %request.Content.Read($$$MaxStringLength)
    
    // Opening a client from DB
-   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .st)
+   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .status)
+   If $$$ISERR(status) {
+   	do object.$set("success", 0, "boolean")
+   	Set object.error = $System.Status.GetErrorText(status)
+   }
    
    // Defining mqtt message class and list of mqtt objects
    Set tpc = ##class(Net.MQTT.Message).%New()
    Set topics = ##class(%ListOfObjects).%New()
    
-   // Creation of abstract object and producement of a JSON
+   // Producement of a JSON
    set JSON = ##class(%AbstractObject).$fromJSON(obj)
    for x=0:1:(JSON.$size()-1){
 	   set tpc.Topic = JSON.$get(x).topicFilter
 	   Do topics.Insert(tpc)
 	   }
-	   set sc = client.Unsubscribe(topics)
+	   set status = client.Unsubscribe(.topics)
+	   // Producement of a JSON (success)
+   		If $$$ISOK(status) {
+    	do object.$set("success", 1, "boolean")
+   		}
+	   // Producement of a JSON (fail)
+	   if $$$ISERR(status) {
+  		do object.$set("success", 0, "boolean")
+  		Set object.error = $System.Status.GetErrorText(status)
+       }
    
   } catch ex {
-       set st=ex.AsStatus()
-}
-	quit st
+       set status=ex.AsStatus()
+       // Producement of a JSON (fail)
+       if $$$ISERR(status) {
+  		do object.$set("success", 0, "boolean")
+  		Set object.error = $System.Status.GetErrorText(status)
+       }
+	}
+	// Producement of a JSON (success)
+	write object.$toJSON()
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -3153,11 +3202,13 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
 <FormalSpec>ClientObjectID:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set st=$$$OK
+	set status=$$$OK
+	// Definition of dynamic json object
+	set object = ##class(%Object).$new()
    try { 
    
    // Opening a client from DB and publishing a message
-   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .st)
+   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .status)
    
    // Getting content data
    set obj = %request.Content.Read($$$MaxStringLength)
@@ -3167,58 +3218,622 @@ Direction of the message: <b><var>I</var></b> is for <var>input</var> (subscribe
    
    // Creation of abstract object and producement of a JSON
    set JSON = ##class(%AbstractObject).$fromJSON(obj)
-   for x=0:1:(JSON.$size()-1){
-	   set message.Topic = JSON.$get(x).topicName
-	   set message.QoSLevel = JSON.$get(x).qos
-	   set message.Retain = JSON.$get(x).retain
-	   set message.Content = JSON.$get(x).content
-	   }
-	   set sc = client.Publish(message)
    
-   } catch ex {
-       set st=ex.AsStatus()
-}
-	quit st
+	   set message.Topic = JSON.topicName
+	   set message.QoSLevel = JSON.qos
+	   set message.Retain = JSON.retain
+	   set message.Content = JSON.content
+	   set status = client.Publish(message)
+	   If $$$ISOK(status) {
+    	do object.$set("success", 1, "boolean")
+    	}
+   	} catch ex {
+       set status=ex.AsStatus()
+       }
+	// Producement of a JSON (fail)
+    if $$$ISERR(status) {
+  	Set object.success = 0
+  	Set object.error = $System.Status.GetErrorText(status)
+  	}
+	write object.$toJSON()
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
-<Method name="PostMessages">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>ClientObjectID:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	set st=$$$OK
-   try { 
-   // Opening a client from DB and ?
-   set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .st)
-   
-   // Getting content data
-   set obj = %request.Content.Read($$$MaxStringLength)
-   
-   // Creation of abstract object and producement of a JSON
-   set consumedJSON = ##class(%AbstractObject).$fromJSON(obj)
-   write consumedJSON.$toJSON()
-   
-   } catch ex {
-       set st=ex.AsStatus()
-}
-	quit st
-]]></Implementation>
-</Method>
-
-<Method name="GetLastMessage">
+<Method name="GetLastMessages">
 <ClassMethod>1</ClassMethod>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-    
-   set st=$$$OK
+   set status=$$$OK
    try {    
-   do ##class(%ZEN.Auxiliary.jsonSQLProvider).%WriteJSONFromSQL(,"select top 5 DeviceID,SensorType from Net_MQTT.Storage")
+   	do ##class(%ZEN.Auxiliary.jsonSQLProvider).%WriteJSONFromSQL(,"select top 5 DeviceID,SensorType from Net_MQTT.Storage")
    } catch ex {
-       set st=ex.AsStatus()
+       set status=ex.AsStatus()
    }
-   quit st
+   quit status
 ]]></Implementation>
 </Method>
 </Class>
+
+
+<Class name="Util.SourceControl">
+<Super>%Studio.SourceControl.File</Super>
+<TimeChanged>64124,62602.237932</TimeChanged>
+<TimeCreated>64113,38662.910035</TimeCreated>
+
+<Parameter name="ExpMode">
+<Description>
+2 - export in classname.cls (udl format)
+1 - export in classname.cls.xml (compatible with cache-tort-git), 
+0 - export in classname.xml   </Description>
+<Default>2</Default>
+</Parameter>
+
+<Parameter name="ResourceName">
+<Description>
+resource name is used to waiting for system event
+do not change</Description>
+<Default>searchResource</Default>
+</Parameter>
+
+<Parameter name="SourceFolder">
+<Description>
+specifies where exported files should be stored</Description>
+<Default>C:/Repo/</Default>
+</Parameter>
+
+<Parameter name="RefreshTime">
+<Description>
+specifies the frequency of checking for new files in the SourceFolder</Description>
+<Default>2</Default>
+</Parameter>
+
+<Method name="Init">
+<Description>
+setup control version for namespace and export all .cls, .mac, .int, .dfi files
+omits generated classes and classes with masks: %.*, csp.*, Ens.*, CSPX.*, INFORMATION.SCHEMA.*</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	// init variables and globals
+	kill ^Sources
+	set ^Sources = ..#SourceFolder _ "/"
+	set ^Sources("CLS","*") = "cls/"
+	set ^Sources("DFI","*") = "dfi/"
+	set ^Sources("MAC","*") = "mac/"
+	set ^Sources("INT","*") = "int/"
+	set ^Sources("INC", "*") = "inc/"
+	set sourceControl = ..%New("")
+	set sc = $$$OK
+
+	// fetch all classes 
+	&sql(DECLARE classCursor cursor for
+		 SELECT ID 
+		 FROM %Dictionary.ClassDefinition 
+		 WHERE (NOT (ID %STARTSWITH '%')) 
+		 	AND NOT (ID %STARTSWITH 'Util.SourceControl') 
+		 	AND NOT (ID %STARTSWITH 'Ens') 
+		 	AND NOT (ID %STARTSWITH 'CSPX') 
+		 	AND NOT (ID %STARTSWITH 'csp') 
+		 	AND NOT (ID %STARTSWITH 'INFORMATION.SCHEMA')
+		 	AND (GeneratedBy IS NULL) )
+	&sql(OPEN classCursor)
+	for {
+		&sql(FETCH classCursor INTO :className)
+		quit:(SQLCODE '= 0)
+		 
+		set sc = sourceControl.OnAfterSave(className _ ".CLS")
+		if $$$ISERR(sc) {
+			do $system.OBJ.DisplayError(sc)
+		}
+	}
+	&sql(CLOSE classCursor)
+	
+	&sql(DECLARE deepseeCursor CURSOR FOR
+		 SELECT documentname 
+		 FROM %DeepSee_UserLibrary.FolderItem)
+	&sql(OPEN deepseeCursor)
+	for {
+		&sql(FETCH deepseeCursor INTO :name)
+		quit:(SQLCODE '= 0)
+		set sc = sourceControl.OnAfterSave(name)
+		if $$$ISERR(sc) {
+			do $system.OBJ.DisplayError(sc)
+		}
+	}
+	&sql(CLOSE deepseeCursor)
+
+	// fetch all routines
+	set st = ##class(%SQL.Statement).%New()
+	set qStatus = st.%PrepareClassQuery("%RoutineMgr","StudioOpenDialog")
+	if $$$ISOK(qStatus) {
+	 	set rs = st.%Execute("*")
+	 	
+	 	while rs.%Next() {
+	 		set fileName = rs.%GetData(1)
+	 		if ($find(fileName, ".mac")) 
+	 			|| ($find(fileName, ".int") 
+	 			|| ($find(fileName, ".DFI")) 
+	 			|| ($find(fileName, ".inc"))) {
+	 			set sc = sourceControl.OnAfterSave(fileName)
+	 			if $$$ISERR(sc) {
+	 				do $system.Status.DisplayError(sc)
+	 			}
+	 		}
+	 	}
+	}
+
+ 	
+ 	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="OnAfterSave">
+<FormalSpec>InternalName:%String,Object:%RegisteredObject</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	
+	set filename=..ExternalName(InternalName)
+	
+	#; File not mapped so nothing to do
+	if filename="" quit $$$OK
+	set name=$Piece(InternalName,".",1,$Length(InternalName,".")-1)
+	
+	#; CSP files are already files so not additional work needed
+	if name["/" quit $$$OK
+	set ext=$ZConvert($Piece(InternalName,".",$Length(InternalName,".")),"U")
+	
+	#; do not export the default projects
+	if ext="PRJ",$zconvert($extract(name,1,$length("default_")),"l")="default_" {
+		return $$$OK
+	}
+	
+	#; By convention items starting with Z,z,%z,%Z are not exported
+	if (ext="PRJ")||($extract($translate(name,"Z%","z"))="z") {
+		return $$$OK
+	}
+	
+	#; if time already matches nothing to do
+	if ##class(%RoutineMgr).TS(InternalName)=$get(^Sources(0,"ItemTimeStamp",InternalName)) {
+		return $$$OK
+	}
+	
+	if (##class(%File).Exists(filename)) && (##class(%File).ReadOnly(filename)) {
+		write !,"File ",filename," is read only, not exporting" quit $$$OK
+	}
+	
+	do ##class(%File).CreateDirectoryChain(##class(%File).GetDirectory(filename))
+	
+	set sc = ""
+	
+	if ..#ExpMode = 2 {
+		set sc = ..ExportUDL(filename, InternalName)
+	} 
+	else {
+		set sc = $system.OBJ.Export(InternalName, filename, "-d /diffexport")
+	}
+	if $$$ISOK(sc) {
+		write !,"Exported '",InternalName,"' to file '",filename,"'"
+		set ^Sources(0,"FileTimeStamp",InternalName) = $zu(140,2,filename,1)
+		set ^Sources(0,"ItemTimeStamp",InternalName) = ##class(%RoutineMgr).TS(InternalName)
+	} else {
+		do $system.Status.DecomposeStatus(sc,,"d")
+		quit sc
+	}
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="OnBeforeLoad">
+<FormalSpec>InternalName:%String,display:%Boolean=1</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set filename = ..ExternalName(InternalName)
+	
+	#; File not mapped so nothing to do
+	if filename = "" {
+		return $$$OK
+	}
+	
+	#; CSP files are already files so not work needed
+	if InternalName["/" {
+		return $$$OK
+	}
+	
+	#; if no file then skip the import
+	if '##class(%File).Exists(filename) {
+		 write:display !,"File ",filename," not found, skipping import" 
+		 return $$$OK
+	}
+	
+	#; if time already matches then no work to do
+	if ##class(%File).GetFileDateModified(filename,1)=$get(^Sources(0,"FileTimeStamp",InternalName)),##class(%RoutineMgr).TS(InternalName)=$get(^Sources(0,"ItemTimeStamp",InternalName)) {
+		return $$$OK
+	}
+	set name = $Piece(InternalName,".",1,$Length(InternalName,".")-1)
+	set ext = $ZConvert($Piece(InternalName,".",$Length(InternalName,".")),"U")
+	
+	set sc = ""
+	if ..#ExpMode = 2 {
+		set sc = ..ImportUDL(InternalName, filename)
+	}
+	else {
+		set sc = $system.OBJ.Load(filename,"fv-d-l")
+	}
+	if $$$ISOK(sc) {
+		write !,"Imported '",InternalName,"' from file '",filename,"'"
+		set ^Sources(0,"FileTimeStamp",InternalName) = ##class(%File).GetFileDateModified(filename,1)
+		set ^Sources(0,"ItemTimeStamp",InternalName) = ##class(%RoutineMgr).TS(InternalName)
+	} else {
+		do $system.Status.DecomposeStatus(sc,.errors,"d")
+	}
+	
+	
+	// start a job - execute each RefreshTime seconds
+	if '$system.Event.Defined(..#ResourceName) {
+		job ..SearchForNewFiles()
+	}
+	
+	return sc
+]]></Implementation>
+</Method>
+
+<Method name="ImportUDL">
+<Description>
+Import a file with location at fileLocation and name as InternalName
+This file should contain code in UDL format</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>InternalName:%String,fileLocation:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+	
+	if $find(fileLocation, ".cls") {
+		set status = ##class(%Compiler.UDL.TextServices).SetTextFromFile($namespace, InternalName, fileLocation)
+	} 
+	
+	else {
+		set file = ##class(%File).%New(fileLocation)
+		return:$$$ISERR(file) file
+		
+		set status = file.Open()
+		return:$$$ISERR(status) status
+		
+		set rtn = ##class(%RoutineMgr).%OpenId(InternalName)
+		return:$$$ISERR(rtn) rtn
+		
+		set status = rtn.Code.CopyFrom(file)
+		return:$$$ISERR(status) status
+		
+		set status = rtn.%Save()
+	}
+	return status
+]]></Implementation>
+</Method>
+
+<Method name="ExportUDL">
+<Description>
+exports fileName to fileLocation file using UDL format</Description>
+<FormalSpec>fileLocation:%String,fileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#include %occErrors
+	if ('$data(fileLocation)) || ('$data(fileName)) {
+		return $$$ERROR($$$InvalidArgument, "not all fields are passed to the method")
+	}
+		
+	
+	set ext = $zconvert($piece(fileName, ".", *), "l")
+	
+	if ext = "cls" {
+		return ..ExportUDLClass(fileLocation, fileName)
+	} 
+	elseif (ext = "mac") || (ext = "int") || (ext = "dfi") || (ext = "inc") {
+		return ..ExportUDLOther(fileLocation, fileName)
+	} 
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ExportUDLClass">
+<Description>
+Exports a class to fileLocation with the name of fileName </Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>fileLocation:%String,fileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set namespace = $namespace
+	set clsformat = ".CLS"
+	set status = ""
+	
+	// transform classname.CLS -> classname
+	set className = $extract(fileName, 1, $find(fileName, clsformat) - ($length(clsformat) + 1))
+	
+	// get class content
+	set status = ##class(%Compiler.UDL.TextServices).GetTextAsString(namespace, className, .classContent)
+	return:$$$ISERR(status) status
+	
+	// write class content to file
+	set fileStream = ##class(%FileCharacterStream).%New()
+	set fileStream.Filename = fileLocation
+	
+	set status = fileStream.Write(classContent)
+	return:$$$ISERR(status) status
+	
+	set status = fileStream.SaveStream()
+	return status
+]]></Implementation>
+</Method>
+
+<Method name="ExportUDLOther">
+<Description>
+Exports .mac, .int, .dfi files to fileLocation with the name of fileName</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>fileLocation:%String,fileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set rtn = ##class(%RoutineMgr).%OpenId(fileName)
+ 	
+ 	// write content to file
+	set fileStream = ##class(%FileCharacterStream).%New()
+	set fileStream.Filename = fileLocation
+	
+	set status = fileStream.CopyFromAndSave(rtn.Code)
+	return:$$$ISERR(status) status
+	
+	return status
+]]></Implementation>
+</Method>
+
+<Method name="ExternalName">
+<CodeMode>expression</CodeMode>
+<FormalSpec>InternalName:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[..ExtName(InternalName)
+]]></Implementation>
+</Method>
+
+<Method name="ExtName">
+<Description>
+Return filename of this item</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>InternalName:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set name = ..Name(InternalName)	
+	if ..#ExpMode = 2 {
+		set $piece(name, ".", *) = $zconvert($piece(InternalName, ".", *), "l")
+	}
+	return $select(name="":"",1:^Sources_$translate(name,"\","/"))
+]]></Implementation>
+</Method>
+
+<Method name="Name">
+<Description>
+Return the name of this item without the prefix to be added by ExtName</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>InternalName:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	if $data(^Sources)'=11 Write !,"^Sources is not setup so hooks will not work" quit ""
+		
+	// for an abstract document, use the GetOther() method to try to determine its "real" class
+	if ##class(%RoutineMgr).UserType(InternalName,.docclass,.doctype) {
+		// Check for a real abstract document subclass (or GetOther() may not work)
+		if $classmethod(docclass,"%IsA","%Studio.AbstractDocument") {
+			// Grab the actual name
+			set actualName = $classmethod(docclass,"GetOther",InternalName)
+			// The actualName is only valid if we get a single .cls as a result
+			if actualName'[",",$ZCVT($P(actualName,".",$L(actualName,".")),"U")="CLS" {
+				// We use what GetOther() gives us, thus Demo.Loan.FindRateProcess.bpl becomes Demo.Loan.FindRateProcess.cls
+				set InternalName = actualName
+			}
+		}
+	}	
+	
+	if $$CheckProtect^%qccServer(InternalName) quit ""
+	set nam=$p(InternalName,".",1,$l(InternalName,".")-1),ext=$p(InternalName,".",$l(InternalName,".")),ext=$zcvt(ext,"u")
+	if nam="" quit ""
+	if ext="PRJ",nam["Default_" quit ""
+	if ext="CLS",$$$defClassKeyGet(nam,$$$cCLASSgeneratedby)'="" quit ""
+	set default=0
+	set p=$order(^Sources(ext,nam)) for  s p=$order(^Sources(ext,p),-1) quit:p=""  if $extract(nam,1,$length(p))=p,$data(^Sources(ext,p),found) quit
+	
+	if $data(found)=0,$data(^Sources(ext,"*"),found) set default=1
+	if $data(found)=0 quit ""
+	if InternalName["/" {
+		set InternalName=$extract(InternalName,$length(p)+1,*)
+		return $translate(found_$translate(InternalName,"%","_"),"\","/")
+	}
+	if ext="CLS"||(ext="PRJ")||(##class(%RoutineMgr).UserType(InternalName)) {
+		set fileLocation = found _ $translate(nam, ".%", "/")
+		if ..#ExpMode = 0 {
+			set fileLocation = fileLocation _ ".xml"
+		}
+		elseif ..#ExpMode = 1 {
+			set fileLocation = fileLocation _ "." _ $zconvert(ext, "l") _".xml"
+		} 
+		else {
+			set fileLocation = fileLocation _ "." _ $zconvert(ext, "l")
+		}
+		set fileLocation = $translate(fileLocation, "\", "/")
+		return fileLocation
+	}
+	return $translate($g(found)_$tr(nam,"%"_$s(default:".",1:""),"_/")_".xml","\","/")
+]]></Implementation>
+</Method>
+
+<Method name="SearchForNewFiles">
+<Description>
+Searches for new files(files that are not in project) in source control directory
+Is executed on another process</Description>
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	if '$system.Event.Defined(..#ResourceName) {
+		do $system.Event.Create(..#ResourceName)
+	}
+	for {
+		do $system.Event.Wait(..#ResourceName, ..#RefreshTime)
+		set dir = ^Sources
+		do ##class(Util.SourceControl).TraverseFileTree(dir)
+	}
+]]></Implementation>
+</Method>
+
+<Method name="GetInternalName">
+<Description>
+Gets the name of a file at fileLocation</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>fileLocation:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set defLocation = $translate(^Sources, "/", "\")
+	set internalName = $translate($extract(fileLocation, $find(fileLocation, defLocation) + 4, *), "\", ".")
+	return internalName
+]]></Implementation>
+</Method>
+
+<Method name="TraverseFileTree">
+<Description>
+Traverses the file tree starting at source control directory</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>dir:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set trs = ##class(%ResultSet).%New("%Library.File:FileSet")
+ 	set tsc = trs.Execute(dir, "*")
+	while trs.Next() {
+		set name = trs.Get("Name")
+ 		set type = trs.Get("Type")
+ 		if type = "D" {
+ 			do ..TraverseFileTree(name)
+ 		}
+ 		else {
+	 		set internalName = ..GetInternalName(name)
+	 		set internalNameUpper = internalName
+	 		set $piece(internalNameUpper, ".", *) = $zconvert($piece(internalNameUpper, ".", *), "U")
+ 			if ('$data(^Sources(0, "FileTimeStamp", internalName))) 
+ 				&& ('$data(^Sources(0, "FileTimeStamp", internalNameUpper))) {
+	 			write !, name
+				set st = ..CreateFile(internalName, name)
+				if $$$ISERR(st) {
+					do $system.Status.DisplayError(st)
+				}
+	 		}
+ 		}
+ 	}
+ 	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="CreateFile">
+<Description>
+Creates new file with the name of internalName which is stored at fileLocation</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>internalName:%String,fileLocation:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set st = ""
+	if $find(fileLocation, "\cls\") {
+		set st = ..CreateClass(internalName, fileLocation)
+	}
+	elseif $find(fileLocation, "\dfi\") {
+		set st = ..CreateDFI(internalName, fileLocation)
+	} 
+	else {
+		set st = ..CreateOther(internalName, fileLocation)
+	}
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="CreateClass">
+<Description>
+Creates a class with the name of internalName which is stored at fileLocation</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>internalName:%String,fileLocation:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set clsDef = ##class(%Dictionary.ClassDefinition).%New()
+	set clsDef.Name = $replace(internalName, ".cls", "")
+	set st = clsDef.%Save()
+	return:$$$ISERR(st) st
+	
+	set st = ..ImportUDL(internalName, fileLocation)
+	return st
+]]></Implementation>
+</Method>
+
+<Method name="CreateDFI">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>internalName:%String,fileLocation:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set st = $$$OK
+    try {
+        set stream = ##class(%Stream.FileCharacter).%New()
+        set st = stream.LinkToFile(fileLocation)
+        return:$$$ISERR(st) st
+        
+        set tDoc = ##class(%DeepSee.UI.FolderItemDocument).%New(internalName)
+        set st = tDoc.ImportFromXML(stream)
+        return:$$$ISERR(st) st
+        
+        set st = tDoc.Save()
+        return:$$$ISERR(st) st
+    } Catch e {
+        set st = e.AsStatus()
+    }
+    return st
+]]></Implementation>
+</Method>
+
+<Method name="CreateOther">
+<Description>
+Creates .mac, .int, .dfi file with the name of intrernalName which is stored at fileLocation</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>internalName:%String,fileLocation:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set fileLocation = $translate(fileLocation, "\", "/")
+	set $piece(internalName, ".", *) = $zconvert($piece(internalName, ".", *), "U")
+	
+	set file = ##class(%File).%New(fileLocation)
+	
+	set rtn = ##class(%Routine).%New(internalName)
+	set status = rtn.CopyFrom(file)
+	return:$$$ISERR(status) status
+	
+	set status = rtn.Save()
+ 	return:$$$ISERR(status) status
+ 	
+ 	set status = rtn.Compile()
+ 	return status
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Project name="mqtt-framework" LastModified="2016-07-25 17:25:44.579436">
+  <Items>
+    <ProjectItem name="MQTTOptions.INC" type="MAC"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Agent" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Aux.MessageCounter" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Aux.MessageStatus" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Aux.Subscription" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Aux.SubscriptionTopic" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Aux.TaskList" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.BMClient" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Client" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Message" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.MessageStore" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MQTT.Storage" type="CLS"></ProjectItem>
+    <ProjectItem name="Net.MyMQTTConnection" type="CLS"></ProjectItem>
+    <ProjectItem name="REST.Broker" type="CLS"></ProjectItem>
+    <ProjectItem name="REST.JSON" type="CLS"></ProjectItem>
+    <ProjectItem name="Util.SourceControl" type="CLS"></ProjectItem>
+  </Items>
+</Project>
 </Export>

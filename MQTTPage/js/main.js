@@ -1,17 +1,72 @@
- $(window).on('load', function () {
+ window.onload = function () {
     var $preloader = $('#page-preloader'),
         $spinner   = $preloader.find('.spinner');
     $spinner.fadeOut();
     $preloader.delay(100).fadeOut('slow');
-});
+};
 
 
+(function() {
+  var app = angular.module('Sensors', [ ]);
+})();
 
+
+/*
 // getting data source
 var app = angular.module('MQTTApp', []);
-app.controller('MQTTCtrl', function($scope, $http) {
-  $scope.isConnected = false;
-  $scope.ShowNotice = function(nHead, nText, nType) {
+
+ app.factory('sensorsREST', [ '$http', function($http) {
+  var factory = {};
+
+  factory.baseUrl = '/rest/json/';
+
+  factory.connect = function(clientid) {
+   return { success: true, error: '', clientObject: 1 };
+  }
+
+  factory.disconnect = function(clientObjectId) {
+   return { success: true, error: '' };
+  }
+
+  factory.subscribe = function(clientObjectId, topics) {
+   // Example: topics = [{topicName: '/isctest/client/#', qos: 2}]
+   return { success: true, error: '', topics: [
+      {topicFilter: '/isctest/client/#', qos: 2}
+     ]};
+  }
+
+  return factory;
+ }]);
+
+app.service('Services', [ 'sensorsREST', function(sensorsREST) {
+  this.connect = function(userId) {
+    var data = sensorsREST.connect(userId);
+    if (data.success)
+    {
+      this.ShowNotice("Connection", "Connection complete.");
+      var $winArea = $('#window-area');
+      $winArea.delay(100).fadeOut('slow');
+      return data.clientObj;
+    }
+    $('#ConnErrMsg').html('Connection failed: ' + data.error);
+    return false;
+  };
+
+  this.disconnect = function(userId) {
+    data = sensorsREST.disconnect(userId);
+    if (data.success)
+    {
+      var $winArea = $('#window-area');
+      $winArea.delay(100).fadeIn('slow');
+      return true;
+    }
+    this.ShowNotice("Disconnection", "Disconnection failed: " + data.error);
+    return false;
+  };
+
+  this.subscribe = function() {};
+
+  this.ShowNotice = function(nHead, nText, nType) {
     if (nHead == undefined) {
       nHead = "Title";
     }
@@ -22,52 +77,47 @@ app.controller('MQTTCtrl', function($scope, $http) {
       nType = 1;
     }
     if (nType == 3) {
-      $scope.modalType = "modal-error";
+      $('#modalType').attr('class', 'modal-header modal-error');
     } else if (nType == 2) {
-      $scope.modalType = "modal-warning";
+      $('#modalType').attr('class', 'modal-header modal-warning');
     } else {
-      $scope.modalType = "modal-info";
+      $('#modalType').attr('class', 'modal-header modal-info');
     }
-    $scope.noticeHeader = nHead;
-    $scope.noticeText = nText;
+    $('#noticeHeader').html(nHead);
+    $('#noticeText').html(nText);
     $('#NoticeModal').modal('show');
   };
-  // Connect
-  $scope.Connect = function() {
-    $http({
-      method: 'GET',
-      url: "../../rest/json/connect/" + $scope.UserId
-    }).success(function(data, status, header, config) {
-      if (!data.success) {
-        $scope.ErrMessages = data.error;
-        return false;
-      }
-      $scope.isConnected = true;
-      $scope.ClientId = data.clientObject;
-      $scope.Subscribe($scope.Topics)
-      var $winArea = $('#window-area');
-      $winArea.delay(100).fadeOut('slow');
-    }).error(function(data, status, header, config) {
-      $scope.ErrMessages = "Connection error!";
-  });
+}]);
+app.controller('ConnectionController', [ '$scope', 'Services', function($scope, Services) {
+  $scope.ClientId;
+  $scope.TopicName;
+
+  $scope.getClientId = function() { return this.ClientId};
+  $scope.setClientId = function(newClientId) { this.ClientId = newClientId};
+
+  $scope.getTopicName = function() { return this.TopicName};
+  $scope.setTopicName = function(newTopicName) { this.TopicName = newTopicName};
+
+  $scope.data = "";
+  $scope.start = function() {
+    console.log($scope.ClientId);
+    var data = Services.connect($scope.ClientId);
+    if (data)
+    {
+      $scope.setClientId(data)     
+    }
   }
-  // Disconnect
-  $scope.Disconnect = function() {
-    $http({
-      method: 'GET',
-      url: "../../rest/json/disconnect/" + $scope.UserId
-    }).success(function(data, status, header, config) {
-      if (!data.success) {
-        $scope.ShowNotice('Disconnectoin error', data.error, 3);
-        return false;
-      }
-      $scope.isConnected = false;
-      var $winArea = $('#window-area');
-      $winArea.delay(100).fadeIn('slow');
-    }).error(function(data, status, header, config) {
-      $scope.ShowNotice('Disconnection error', data.error, 3);
-    });
+  $scope.stop = function() {
+    var data = Services.disconnect($scope.getClientId());
+    if (data)
+    {
+      //
+    }
   }
+
+  
+  
+  
   $scope.OpenSubscribeMolad = function() {
     $('#SubscribeModal').modal('show');
   }
@@ -75,7 +125,25 @@ app.controller('MQTTCtrl', function($scope, $http) {
     $('#SendMessageModal').modal('show');
   }
   // Subscribe
-  $scope.Subscribe = function(topics) {
+  $scope.subscribe = function() {}
+    var topics = $scope.Topics.split(", ");
+    var dataObjs = new Array();
+    for (var i=0; i<topics.length; i++) {
+      dataObjs.push({"topicFilter": topics[i], "qos": "2"})
+    }
+    var data = Services.connect($scope.getClientId(), dataObjs);
+    if (data.success)
+    {
+      $scope.setTopicName(data.topics);
+      var bufstr = data.topics[0].topicFilter;
+      for (var i=1; i<data.topics.length; i++) {
+        bufstr += ", " + data.topics[i].topicFilter;
+      }
+      $scope.ShowNotice('Subscribe', 'Subscribe successfully complete! \nYou are subscribed to: ' + bufstr + ".");
+    
+
+
+  
     // Getting array of topics
     var topics = topics.split(", ");
     var dataObjs = new Array();
@@ -101,9 +169,10 @@ app.controller('MQTTCtrl', function($scope, $http) {
       $scope.ShowNotice('Subscribe error', data.error, 3);
     });
   }
+  
 
   // Unubscribe
-  $scope.Unsubscribe = function() {
+  $scope.unsubscribe = function() {
     // Getting array of topics
     var topics = $scope.link.split(", ");
     var dataObjs = new Array();
@@ -124,7 +193,9 @@ app.controller('MQTTCtrl', function($scope, $http) {
     }).error(function(data, status, header, config) {
       $scope.ShowNotice('Unsubscribe error', data.error, 3);
     });
+    
   }
+  
 
   $scope.PublishMessage = function() {
     // Getting array of topics
@@ -132,7 +203,7 @@ app.controller('MQTTCtrl', function($scope, $http) {
       method: 'POST',
       headers: "",//{ 'Content-Type': 'application/json' },
       url: "../../rest/json/subscribe/" + $scope.ClientId,
-      data: $scope.sendMessageForm.meslink.value;
+      data: $scope.sendMessageForm.meslink.value
     }).success(function(data, status, header, config) {
       if (!data.success) {
         $scope.ShowNotice('Subscribe error', data.error, 3);
@@ -146,6 +217,7 @@ app.controller('MQTTCtrl', function($scope, $http) {
     }).error(function(data, status, header, config) {
       $scope.ShowNotice('Subscribe error', data.error, 3);
     });
+    
   }
 
   $scope.GetMessages = function() {
@@ -158,6 +230,9 @@ app.controller('MQTTCtrl', function($scope, $http) {
     }).error(function(data, status, header, config) {
       $scope.ShowNotice('Data', 'Error loading data.', 3);
   });
+  
   }
+  
 
-});
+}]);
+ */

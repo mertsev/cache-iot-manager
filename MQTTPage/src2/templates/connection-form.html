@@ -1,0 +1,59 @@
+<div id="window-area" class="navbar-collapse parent">
+<form novalidate name="connectionForm" id="validateForm" role="form" class="form-horizontal inner">
+	<div class="col-sm-8 col-md-10" >
+		<div class="form-group">
+			<label for="connectionClientID" class="control-label col-sm-4">Client ID:</label>
+			<div class="col-sm-8">
+				<input type="text" id="connectionClientID" name="connectionClientID"
+					class="form-control" size="23" maxlength="23" placeholder="MQTT Client ID..." required 
+					ng-model="connection.clientID"
+				/>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="connectionTopicPrefix" class="control-label col-sm-4">Topic Prefix:</label>
+			<div class="col-sm-8">
+				<input type="text" id="connectionTopicPrefix" name="connectionTopicPrefix" 
+					class="form-control" size="50" placeholder="f.e.: /isctest/client/" required 
+					ng-model="connection.topicPrefix"
+				/>
+			</div>
+		</div>
+		<!--<div class="form-group">
+			<label for="connectionID" class="control-label col-sm-4">Connection ID:</label>
+			<div class="col-sm-8">
+				<input type="text" id="connectionID" name="connectionTopicPrefix" 
+					class="form-control" size="50" readOnly
+					ng-model="connection.connectionID"
+				/>
+			</div>
+		</div>
+		-->
+	</div>
+	<div class="col-sm-4 col-md-2 text-center" >
+		<input type="button" value="Start" class="btn btn-success btn-lg" ng-disabled="!connectionForm.$valid" ng-click="connection.start()" 
+		/>
+	</div>
+</form>
+	</div>
+
+	
+<!--
+<form novalidate name="connectionForm" id="validateForm" role="form" class="navbar-form inner" ng-submit="connection.start()">
+      
+          <input type="text" id="connectionClientID" name="connectionClientID"
+					class="form-control" size="23" maxlength="23" placeholder="MQTT Client ID..."
+					ng-model="connection.clientID" autofocus required />
+          <input type="text" id="connectionTopicPrefix" name="connectionTopicPrefix" 
+					class="form-control" size="50" placeholder="f.e.: /isctest/client/" required 
+					ng-model="connection.topicPrefix"
+				/>
+          <button type="button" class="btn form-control btn-success" ng-click="connection.start()" ng-disabled="!connectionForm.$valid">Connect</button>
+          <div class="glow"> </div>
+          <div class="errorMsgs">
+            <div style="color:green;" ng-show="!connectionForm.$valid">Enter the UserId and Topics</div>
+            <div style="color:green;" ng-show="connectionForm.$valid">Push the button "Connect"</div>
+            <p style="color:red;" id="ConnErrMsg"></p>
+          </div>
+        </form>
+        -->

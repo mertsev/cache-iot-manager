@@ -1,4 +1,4 @@
-# mqtt-framework
+# cache-iot-manager
 Framework for managing IoT data through Intersystems Cache and simple angularJs web interface
 
 #Contains

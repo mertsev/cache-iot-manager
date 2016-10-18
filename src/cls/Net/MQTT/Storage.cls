@@ -1,17 +1,19 @@
 Class Net.MQTT.Storage Extends (%Persistent, %Populate)
 {
 
-Property DeviceID As %String;
+Property DeviceID As %String [ Required ];
 
-Property SensorType As %String;
+Property SensorType As %String [ Required ];
 
-Property CreatedAt As %DateTime;
+Property CreatedAt As %DateTime [ Required ];
 
-Property Value1 As %Double;
+Property Value1 As %Numeric [ Required ];
 
-Property Value2 As %Double;
+Property Value2 As %Numeric [ Required ];
 
-Property Value3 As %Double;
+Property Value3 As %Numeric [ Required ];
+
+Parameter DSTIME = "MANUAL";
 
 Storage Default
 {

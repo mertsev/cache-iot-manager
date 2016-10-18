@@ -1,6 +1,10 @@
 Class REST.JSON Extends %Base
 {
 
+Parameter TRACETARGET As %String = "^MQTT.Trace";
+
+Parameter ONMESSAGE As %String = "Net.MQTT.BMClient:MyMessageHandler";
+
 ClassMethod GetConnect(ClientID As %String) As %Status
 {
 	set status=$$$OK
@@ -12,7 +16,8 @@ ClassMethod GetConnect(ClientID As %String) As %Status
    set client = ##class(Net.MQTT.Client).%New()
    set client.Host = "iot.eclipse.org"
    set client.ClientId = ClientID
-   set client.traceTarget = "^MQTT.Trace"
+   set client.traceTarget = ..#TRACETARGET
+   set client.OnMessage = ..#ONMESSAGE
    If $$$ISOK(status) {
     // Starting the agent
    	set status = client.StartAgent() 
@@ -56,11 +61,6 @@ ClassMethod GetDisconnect(ClientObjectID As %String) As %Status
    
    // Deleting a client
    set status = ##class(Net.MQTT.Client).%DeleteId(ClientObjectID)
-   // Producement of a JSON (fail)
-   If $$$ISERR(status) {
-   	do object.$set("success", 0, "boolean")
-   	Set object.error = $System.Status.GetErrorText(status)
-   }
   
    // Producement of a JSON (success)
    If $$$ISOK(status) {
@@ -227,7 +227,7 @@ ClassMethod PostPublish(ClientObjectID As %String) As %Status
        }
 	// Producement of a JSON (fail)
     if $$$ISERR(status) {
-  	Set object.success = 0
+  	do object.$set("success", 0, "boolean")
   	Set object.error = $System.Status.GetErrorText(status)
   	}
 	write object.$toJSON()
@@ -237,12 +237,62 @@ ClassMethod PostPublish(ClientObjectID As %String) As %Status
 ClassMethod GetLastMessages() As %Status
 {
    set status=$$$OK
-   try {    
-   	do ##class(%ZEN.Auxiliary.jsonSQLProvider).%WriteJSONFromSQL(,"select top 5 DeviceID,SensorType from Net_MQTT.Storage")
-   } catch ex {
-       set status=ex.AsStatus()
+   // Definition of dynamic json object
+   set object = ##class(%Object).$new()
+   set queryArray = ##class(%Array).$new()
+   set object.data = queryArray
+
+   // Execution of the query
+   #sqlcompile select = display
+   TRY {
+  	&sql(DECLARE c1 CURSOR FOR 
+  	SELECT 
+  	info.DeviceID AS device, info.SensorType AS sensor, info.CreatedAt AS created, 
+  	info.Value1 AS val1, info.Value2 AS val2, info.Value3 AS val3
+  	INTO :device, :sensor, :created, :value1, :value2, :value3
+	FROM 
+  	Net_MQTT.Storage AS info
+	INNER JOIN
+	( 
+  	SELECT DeviceID, SensorType, MAX(ID) AS ID FROM Net_MQTT.Storage
+  	GROUP BY DeviceID, SensorType
+	) AS lastmsg
+	ON info.ID = lastmsg.ID
+	ORDER BY sensor, device
+  	)
+  	If '$Get(SQLCODE, 0) { &sql(OPEN c1) }
+  	If $Get(SQLCODE, 0) { Set status = $$$ERROR($$$SQLError, SQLCODE, "Problem while opening 'c1'") }
+  
+  	While $$$ISOK(status) {
+	  	&sql(FETCH c1) Quit:SQLCODE
+	  	set record = ##class(%Object).$new()
+	  	set record.device = device 
+	  	set record.sensor = sensor
+	  	set record.created = created
+	  	set record.value1 = value1
+	  	set record.value2 = value2
+	  	set record.value3 = value3
+	  	do queryArray.$push(record)
+ 	}
+ 	
+ 	If $$$ISOK(status) && $Get(SQLCODE, 0) && (SQLCODE '= 100) {
+    	Set status = $$$ERROR($$$SQLError, SQLCODE, "Problem while fetching 'c1'")
+    }
+    Else {
+		do object.$set("success", 1, "boolean")
+	}
    }
-   quit status
+ 	CATCH ex {
+  		Set status = ex.AsStatus()
+	}
+	if $$$ISERR(status) {
+		do object.$set("success", 0, "boolean")
+		set object.error = $System.Status.GetErrorText(status)
+		set object.data = ##class(%Array).$new()
+	}
+	write object.$toJSON()
+ 	&sql(CLOSE c1)
+ 	Quit $$$OK
 }
 
 }

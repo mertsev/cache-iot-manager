@@ -612,41 +612,41 @@ Method RecvPUBLISH(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pCon
 		If 'dup {
 			If pQoS > 0 {
 				Set tSC = ##class(Net.MQTT.Aux.MessageStatus).RegisterMessageIn(..ClientId, msgid, pQoS)
-			}
-			If $$$ISOK(tSC) {
-				Set msg				= ##class(Net.MQTT.MessageStore).%New()
-				Set msg.ClientId	= ..ClientId
-				Set msg.Direction	= "I"
-				Set msg.MessageId	= msgid
-				Set msg.QoSLevel	= pQoS
-				Set msg.Retain		= pRetain
-				Set msg.Topic		= topic
-				Set msg.Content		= $Extract(pContent, pos, *)
-				Set tSC = msg.%Save()
-				
-				Set msg				= ##class(Net.MQTT.Message).%New()
-				Set msg.MessageId	= msgid
-				Set msg.QoSLevel	= pQoS
-				Set msg.Retain		= pRetain
-				Set msg.Topic		= topic
-				Set msg.Content		= $Extract(pContent, pos, *)
-				Set tSC = $ClassMethod("Net.MQTT.BMClient", "MyMessageHandler", msg, topic)
-				set ^msg1($increment(^msg1)) = "OK"
-			
-			}
-			If $$$ISOK(tSC) && (pQoS > 0) {
-				Set taskid = ##class(Net.MQTT.Aux.TaskList).CreateNewTask(..connectionId, msgid, $Case(pQoS, 2: "PUBREC", : "PUBACK"), .tSC)
+				If $$$ISOK(tSC) {
+					Set taskid = ##class(Net.MQTT.Aux.TaskList).CreateNewTask(..connectionId, msgid, $Case(pQoS, 2: "PUBREC", : "PUBACK"), .tSC)
+				}
 			}
 		}
 	}
 	CATCH ex {
 		Set tSC = ex.AsStatus()
+		$$$MQTTTraceINF("Error of saving a message. " _ ex.AsStatus())
+		return tSC
 	}
 	Do ##class(Net.MQTT.Aux.MessageStatus).%UnlockExtent()
 	If $$$ISOK(tSC) { TCommit }
 	Else { TRollback }
-		
-	Quit tSC
+	If $$$ISERR(tSC) {
+		Quit tSC
+	}
+	
+	Try {		
+		Set msg				= ##class(Net.MQTT.Message).%New()
+		Set msg.MessageId	= msgid
+		Set msg.QoSLevel	= pQoS
+		Set msg.Retain		= pRetain
+		Set msg.Topic		= topic
+		Set msg.Content		= $Extract(pContent, pos, *)
+		Set tSC = ..RunOnMessage(msg, topic)
+	}
+	CATCH ex {
+		Set tSC = ex.AsStatus()
+	}
+	If $$$ISERR(tSC) {
+		$$$MQTTTraceERR("Error of saving a message. " _ $system.Status.GetErrorText(tSC))
+	}
+				
+	Quit $$$OK
 }
 
 Method CloseDev() [ Internal, Private ]
@@ -755,6 +755,14 @@ Storage Default
 </Data>
 <DefaultData>AgentDefaultData</DefaultData>
 <Type>%Library.CacheStorage</Type>
+}
+
+Method RunOnMessage(msg As Net.MQTT.Message, topic As %String) As %Status [ Private ]
+{
+	Set class = $P(..OnMessage, ":", 1)
+	Set method = $P(..OnMessage, ":", 2)
+	Set tSC = $ClassMethod(class, method, msg, topic)
+	return tSC
 }
 
 }

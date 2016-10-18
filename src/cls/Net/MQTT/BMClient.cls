@@ -9,17 +9,21 @@ ClassMethod MyMessageHandler(pMessage As Net.MQTT.Message, pTopic As %String) As
 	
 	set newObject = ##class(%AbstractObject).$fromJSON(jstring)
 	
-	for i=1:1:(newObject.$size() - 1) 
+	for i=0:1:(newObject.$size() - 1) 
 	{
 		set item = newObject.$get(i)
 		set s = ##class(Net.MQTT.Storage).%New()
-		set s.DeviceID = pTopic
+		set s.DeviceID = $Piece(pTopic, "/isctest/client/", 2)
 		set s.CreatedAt = item.createdAt
 		set s.SensorType = item.name
 		set s.Value1 = item.values.$get(0)
 		set s.Value2 = item.values.$get(1)
 		set s.Value3 = item.values.$get(2)
-		return s.%Save()
+		set tSC =  s.%Save()
+		if $$$ISOK(tSC) {
+			do ##class(%DeepSee.Utils).%ProcessFact("SensorData", s.%Id(), 0)
+		}
+		
 	}
 	}
 	CATCH ex {

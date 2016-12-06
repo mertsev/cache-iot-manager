@@ -5,8 +5,6 @@
 Class Net.MQTT.MessageStore Extends %Persistent
 {
 
-// just comment
-
 Index MsgIdx On (ClientId, Topic);
 
 Property ClientId As %String(MAXLEN = 23) [ Required ];

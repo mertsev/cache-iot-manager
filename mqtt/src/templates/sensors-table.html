@@ -1,0 +1,45 @@
+<!-- Table for get data -->
+<div class="row well well-sm ng-app" style="min-height: 50px;">
+	<!-- Tabs -->
+	  <ul id="Tabs" class="nav nav-tabs">
+	    <li ng-repeat="sensor in sensors.data" ng-class="{ active: sensors.isActiveTab($index) }" ng-click="sensors.setActiveTab($index)">
+			<a data-toggle="tab" href="#{{sensor.sensorType}}">{{sensor.sensorType}}</a>
+		</li>
+		<li ng-class="{ active: -2 }" ng-click="sensors.setActiveTab(-2)">
+			<a data-toggle="tab" href="#Sensors">Sensors</a>
+		</li>
+		<!-- Button for hiding table -->
+		<button type="button" class="btn { active: -1 }" style="float:right;" data-toggle="tab" ng-click="sensors.setActiveTab(-1)">
+          <span class="glyphicon glyphicon-menu-hamburger"></span>
+        </button>
+	  </ul>   
+	  <div class="tab-content pre-scrollable">
+	    <div ng-repeat="sensor in sensors.data" id="{{sensor.sensorType}}" class="tab-pane fade"
+		ng-class="{ in: sensors.isActiveTab($index), active: sensors.isActiveTab($index) }"	>
+		<!-- Table -->
+	      <table class="table table-striped table-hover">
+	      	<!-- Head -->
+	        <thead>
+	          <tr>
+	            <th ng-repeat="(key, value) in sensor.devices[0]">{{key}}</th>
+	          </tr>
+	        </thead>
+	        <!-- Body -->
+	        <tbody>
+	          <tr ng-repeat="x in sensor.devices">
+	            <td ng-repeat="(key, value) in x">
+	              {{value}}
+	            </td>
+	          </tr>
+	        </tbody>
+	      </table>
+	    </div>
+	    <div id="Sensors" class="tab-pane fade" ng-class="{ in: sensors.isActiveTab(-2), active: sensors.isActiveTab(-2) }"	>
+	    	<div ng-repeat="lamp in sensors.lamps" class="light" style="float:left">
+	    		<div class="light-{{lamp.light}}"></div>
+	    		<p>{{lamp.value}}</p>
+	    		<p>{{lamp.device}}</p>
+	    	</div>
+	    </div>
+	  </div>
+</div>

@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> MQTT Sensors </title>
+
+  <!-- ANGULAR JS -->
+  <script src="js/angular.min.js"></script>
+  <!-- JQUERY -->
+  <script src="js/jquery.min.js"></script>
+  <!-- BOOTSTRAP -->
+  <link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap-theme.min.css">
+  <script src="bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+  <!-- MY CSS -->
+  <link rel="stylesheet" type="text/css" href="css/main.css" />
+  <!-- MY JS -->
+  <script src="js/main.js"></script>
+  <!-- REST -->
+  <script src="src/factories/connection-rest.js"></script>
+  <script src="src/factories/sensors-rest.js"></script>
+  <script src="src/factories/sendmessage-rest.js"></script>
+  <!-- Controllers -->
+  <script src="src/controllers/navbar.js"></script>
+  <script src="src/controllers/connection.js"></script>
+  <script src="src/controllers/sensors.js"></script>
+  <script src="src/controllers/notice.js"></script>
+  <script src="src/controllers/subscription.js"></script>
+  <script src="src/controllers/sendmessage.js"></script>
+  <script src="src/controllers/sensors-dashboard.js"></script>
+  <script src="src/controllers/sendmessage.js"></script>
+  <!-- Directives -->
+  <script src="src/directives/navbar-nav.js"></script>
+  <script src="src/directives/connection-form.js"></script>
+  <script src="src/directives/sensors-table.js"></script>
+  <script src="src/directives/notice-modal.js"></script>
+  <script src="src/directives/subscription-modal.js"></script>
+  <script src="src/directives/sendmessage-modal.js"></script>
+  <script src="src/directives/sensors-dashboard.js"></script>
+</head>
+<body ng-app="Sensors">
+
+
+<!-- Preloader -->
+<div id="page-preloader"><div class="loader"></div><span class="spinner">Loading...</span></div>
+
+<!-- Notice modal -->
+<div class="container-fluid">
+<notice-modal />
+</div>
+<!-- Subscribe form modal -->
+<div class="container-fluid">
+  <subscription-modal />
+</div>
+<!-- Send Message form modal -->
+<div class="container-fluid">
+  <sendmessage-modal />
+</div>
+
+<!-- Connection form -->
+<div class="container-fluid">
+    <connection-form />
+</div>
+
+<!-- NAVBAR -->
+<div class="container-fluid">
+  <navbar-nav />
+</div>
+
+<!-- MAIN PART -->
+<div class="container-fluid">
+  <!-- Table for get data -->
+  <div>   
+    <sensors-table />
+  </div>
+
+  <!-- DEEPSEE PART -->
+  <div class="container-fluid row well well-sm">
+    <sensors-dashboard />
+  </div>
+  
+  </div>
+
+  
+</body>
+</html>

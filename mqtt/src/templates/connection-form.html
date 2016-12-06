@@ -1,0 +1,37 @@
+<!-- Connection form -->
+<div id="window-area" class="navbar-collapse parent">
+  <div class="inner">
+    <div class="row container">
+	  <form class="form-horizontal col-sm-offset-4 col-sm-6" name="validateForm" id="validateForm" ng-submit="connection.start()">
+      <!-- Input area of UserID -->
+	    <div class="form-group">
+  	      <label for="connectionClientID" class="col-sm-2 control-label">User ID</label>
+	      <div class="col-sm-10">
+	        <input type="text" id="connectionClientID" class="form-control" placeholder="MQTT Client ID..." ng-model="connection.clientID" name="connectionClientID" maxlength="23" size="23" autofocus required>
+	      </div>
+	    </div>
+      <!-- Input area of topics -->
+	    <div class="form-group">
+          <label for="connectionTopicPrefix" class="col-sm-2 control-label">Topics</label>
+	      <div class="col-sm-10">
+		    <input type="text" id="connectionTopicPrefix" class="form-control" placeholder="f.e.: /isctest/client/" ng-model="connection.topicPrefix" name="connectionTopicPrefix" pattern="/[^\s]*/[^\s]*/*" size="50" required>
+	  	  </div>
+	    </div>
+
+    <!-- Button Connect -->
+	  </form>
+  	  <div style="height:15px" class="hidden-xs"></div>
+  	  <div id="connectBtn">
+	    <button type="button" class="btn btn-lg col-sm-2 col-xs-12 btn-success block-center" ng-click="connection.start()" ng-disabled="!validateForm.$valid">Connect</button>
+  	  </div>
+    </div>
+    <div class="glow"> </div>
+
+    <!-- Part for interactive messages -->
+    <div class="errorMsgs">
+      <div style="color:green;" ng-show="!validateForm.$valid">Enter the UserId and Topics</div>
+      <div style="color:green;" ng-show="validateForm.$valid">Push the button "Connect"</div>
+      <div style="color:red;" id="ConnErrMsg">{{ConnErrMsg}}</div>
+    </div>
+  </div>
+</div>

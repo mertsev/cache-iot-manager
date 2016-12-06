@@ -1,7 +1,7 @@
 /// The MQTT Agent is always started by a <class>Net.MQTT.Client</class> in the background to manage the real communication with the broker.
 /// <p>The agent inherits its settings from the Client, which started it and it is responsible for:<ul>
 /// <li>Building the TCP connection to the broker.</li>
-/// <li>Executing the tasks created by the Client (and the Agent itself) based on the <class>Net.MQTT.Aux.TaskList</class> records.
+/// <li>Executing the tasks created by the Client (and the Agent itself) based on the <class>Net.MQTT.Auxiliary.TaskList</class> records.
 ///  E.g.: sending various messages to the broker.</li>
 /// <li>Keeping the connection alive by sending PING requests to the broker, when no other messages has been sent for a certain amount of time.</li>
 /// <li>Listening for incoming messages from the broker and triggering appropriate actions based on the message type.</li>
@@ -21,7 +21,15 @@ Property lastMessage As %TimeStamp [ InitialExpression = {$ZDateTime($ZTimeStamp
 
 Property lastPing As %TimeStamp;
 
-Property fatalError As %Boolean [ InitialExpression = 0 ];
+/// If connection error is assumed, an automatic re-connect attempt is done by the Agent.
+/// In that period this property is set to <var>-1</var>.
+/// <p>If automatic re-connect is not possible, <property>fatalError</property> is set to <var>1</var>,
+/// and the Agent stops itself.</p>
+Property fatalError As %Integer(MAXVAL = 1, MINVAL = -1) [ InitialExpression = 0 ];
+
+Property username As %String [ Transient ];
+
+Property password As %String [ Transient ];
 
 /// This method is called directly (as a background job) by the <class>Net.MQTT.Client</class> to start the Agent.
 /// <p><var>pInitialState</var> is the XML serialized content of the calling Client object, from which the agent can populate its own properties.</p>
@@ -34,7 +42,10 @@ ClassMethod StartListening(pInitialState As %String, pUsername As %String = "", 
 	Do reader.Correlate("root", ..%ClassName(1))
 	Set tSC = reader.OpenString(pInitialState)
 	If $$$ISOK(tSC) && reader.Next(.agent) {
-		Set tSC = agent.DoCONNECT(pUsername, pPassword)
+		// It's necessary to strore username and password in memory for automatic reconnect feature
+		Set agent.username = pUsername
+		Set agent.password = pPassword
+		Set tSC = agent.DoCONNECT(agent.username, agent.password)
 		If $$$ISOK(tSC) {
 			Do agent.Listen()
 		}
@@ -48,7 +59,7 @@ ClassMethod StartListening(pInitialState As %String, pUsername As %String = "", 
 }
 
 /// The main function of the Agent. Unless a fatal error happens, it runs in an endless loop, doing onw of the followin things in every loop:<ul>
-/// <li>If a pending <class>Net.MQTT.Aux.TaskList</class> object can be found for the Agent's unique <property>connectionId</property>,
+/// <li>If a pending <class>Net.MQTT.Auxiliary.TaskList</class> object can be found for the Agent's unique <property>connectionId</property>,
 ///  it starts to execute the corresponding task, then signals the initiator of the task via the <class>%SYSTEM.Event</class> API.</li>
 /// <li>If no response has arrived from the broker for the last PING request within the <property>KeepAliveInterval</property>
 ///  it treats the connection to the broker broken and stops.</li>
@@ -58,21 +69,31 @@ ClassMethod StartListening(pInitialState As %String, pUsername As %String = "", 
 /// </ul>
 Method Listen() [ Internal, Private ]
 {
-	Use ..device
+	If ..SSLConfig = "" {
+		Use ..device
+	}
+	Else {
+		Use ..device:(:::::::/SSL=..SSLConfig)
+	}
 	$$$MQTTTraceINF("Agent for " _ ..ClientId _ " to <" _ ..Host _ ":" _ ..Port _ "> starts listening")
 	Do SetIO^%NLS("RAW")
 	While 1 {
-		If ..fatalError {
+		If ..fatalError > 0 {
 			Quit
 		}
 		
 		TRY {
-			Set tSC = ##class(Net.MQTT.Aux.TaskList).AcquireNext(..connectionId, .taskId, .contextId, .action)
+			Set tSC = ##class(Net.MQTT.Auxiliary.TaskList).AcquireNext(..connectionId, .taskId, .contextId, .action)
 			If $$$ISOK(tSC) {
 				If taskId '= "" {
-					$$$MQTTTraceINF("Agent for " _ ..ClientId _ " to <" _ ..Host _ ":" _ ..Port _ "> processes task (" _taskId _ ")")
+					If $$$MQTTTraceDebug {
+						$$$MQTTTraceDEB("Agent for " _ ..ClientId _ " to <" _ ..Host _ ":" _ ..Port _ "> processes task (" _taskId _ ")")
+					}
+					Else {
+						$$$MQTTTraceINF("Agent for " _ ..ClientId _ " to <" _ ..Host _ ":" _ ..Port _ "> processes '" _ action _ "' action")
+					}
 					Set tSC = $METHOD($this, "Do" _ action, taskId, contextId)
-					Set tSC = ##class(Net.MQTT.Aux.TaskList).SignalTask(..connectionId, taskId, tSC, (''..debugMode))
+					Set tSC = ##class(Net.MQTT.Auxiliary.TaskList).SignalTask(..connectionId, taskId, tSC, $$$MQTTTraceDebug)
 				}
 				ElseIf (..lastPing '= "") && ($System.SQL.DATEDIFF("s", ..lastPing, $ZDateTime($ZTimeStamp, 3, 1)) > ..KeepAliveInterval) {
 					$$$MQTTTraceERR("PINGRESP message has not arrived from <" _ ..Host _ ":" _ ..Port _ "> within the timeout interval")
@@ -115,7 +136,7 @@ Method RecvMessage() As %Status
  TRY {	
 	Read header#1:0 Set timeout = ('$Test)
 	If 'timeout {
-		$$$MQTTTraceIN("Header", header)
+		$$$MQTTTraceIN("Header", header, $$$MQTTTraceDebug)
 		Set type	= ..GetMessageType(header)
 		Set typeT	= $$$MQTTMsgType(type)
 		Set dup		= ..IsDuplicate(header)
@@ -137,7 +158,7 @@ Method RecvMessage() As %Status
 		}
 		
 		Set content = ""
-		$$$MQTTTraceIN("Length", rl)
+		$$$MQTTTraceIN("Length", rl, $$$MQTTTraceDebug)
 		If $$$ISOK(tSC) && (length > 0) {
 			Read content#length:..ReadTimeout Set timeout = ('$Test)
 			If timeout || ($Length(content) '= length) {
@@ -145,15 +166,24 @@ Method RecvMessage() As %Status
 			}
 		}
 		If $$$ISOK(tSC) {
-			$$$MQTTTraceIN(typeT, header _ rl _ content)
+			$$$MQTTTraceIN(typeT, header _ rl _ content, $$$MQTTTraceInfo)
 		}
 		Set tSC = $METHOD($this, "Recv" _ typeT, dup, qos, retain, content)
 	}
  }
  CATCH ex {
 	If ex.%IsA("%Exception.SystemException") && (ex.Name = "<READ>") {
-		$$$MQTTTraceERR("MQTT broker probably closed TCP connection to <" _ ..Host _ ":" _ ..Port _ "> (READ error)")
-		Set ..fatalError = 1
+		$$$MQTTTraceWRN("MQTT broker probably closed TCP connection to <" _ ..Host _ ":" _ ..Port _ "> (READ error)")
+		// Try reconnect
+		Set sc = $$$OK
+		If ('..fatalError) {
+			Set ..fatalError = -1
+			Set sc = ..DoCONNECT(..username, ..password)
+		}
+		If $$$ISERR(sc) {
+			$$$MQTTTraceERR("Agent couldn't re-connect automatically to <" _ ..Host _ ":" _ ..Port _ ">")
+			Set ..fatalError = 1
+		}
 	}
 	Set tSC = ex.AsStatus() 
  } 
@@ -169,7 +199,7 @@ Method DoCONNECT(pUsername As %String = "", pPassword As %String = "") As %Statu
 	Set ..saveIODev = $IO
 	If ('..connected) {
 		Set ..device = "|TCP|" _ ..Port _ "|" _ $P($Job, ":")
-		Open ..device:(..Host:..Port::::::):..ConnectTimeout Set timeout=('$Test)
+		Open ..device:(..Host:..Port::::::$Case(..SSLConfig, "": "", :"/SSL="_..SSLConfig)):..ConnectTimeout Set timeout=('$Test)
 		
 		If timeout {
 			$$$MQTTTraceERR("Agent for " _ ..ClientId _ " to <" _ ..Host _ ":" _ ..Port _ "> failed to start TCP connection")
@@ -181,7 +211,12 @@ Method DoCONNECT(pUsername As %String = "", pPassword As %String = "") As %Statu
 		}
 	}
 	
-	Use ..device
+	If ..SSLConfig = "" {
+		Use ..device
+	}
+	Else {
+		Use ..device:(:::::::/SSL=..SSLConfig)
+	}
 	Do SetIO^%NLS("RAW")
 	Set tSC = ..SendCONNECT(pUsername, pPassword)
 	If $$$ISERR(tSC) {
@@ -203,9 +238,9 @@ Method DoDISCONNECT(pTaskId As %String, pConnectionId As %String) As %Status [ I
 }
 
 /// Sends a <b><var>SUBSCRIBE</var></b> message to the MQTT broker. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Idenifier.
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Idenifier.
 /// If it contains a colon, this is a repeated attempt, because no acknowledge has been received from the broker within the defined timout period.</p>
-/// <p>The details of the <b><var>SUBSCRIBE</var></b> message must be stored in a <class>Net.MQTT.Aux.Subscription</class> object.</p>
+/// <p>The details of the <b><var>SUBSCRIBE</var></b> message must be stored in a <class>Net.MQTT.Auxiliary.Subscription</class> object.</p>
 Method DoSUBSCRIBE(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set dup = 0
@@ -214,16 +249,16 @@ Method DoSUBSCRIBE(pTaskId As %String, pMessageId As %String) As %Status [ Inter
 		Set msgid = $Piece(pMessageId, ":", 1)
 		Set dup = (''$Piece(pMessageId, ":", 2))
 	}
-	Set topics = ##class(Net.MQTT.Aux.Subscription).GetTopicList(..ClientId, msgid, .tSC)
+	Set topics = ##class(Net.MQTT.Auxiliary.Subscription).GetTopicList(..ClientId, msgid, .tSC)
 	Set:$$$ISOK(tSC) tSC = ..SendSUBSCRIBE(msgid, topics, dup)
 	
 	Quit tSC
 }
 
 /// Sends a <b><var>UNSUBSCRIBE</var></b> message to the MQTT broker. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Idenifier.
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Idenifier.
 /// If it contains a colon, this is a repeated attempt, because no acknowledge has been received from the broker within the defined timout period.</p>
-/// <p>The details of the <b><var>UNSUBSCRIBE</var></b> message must be stored in a <class>Net.MQTT.Aux.Subscription</class> object.</p>
+/// <p>The details of the <b><var>UNSUBSCRIBE</var></b> message must be stored in a <class>Net.MQTT.Auxiliary.Subscription</class> object.</p>
 Method DoUNSUBSCRIBE(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set dup = 0
@@ -232,17 +267,17 @@ Method DoUNSUBSCRIBE(pTaskId As %String, pMessageId As %String) As %Status [ Int
 		Set msgid = $Piece(pMessageId, ":", 1)
 		Set dup = (''$Piece(pMessageId, ":", 2))
 	}
-	Set topics = ##class(Net.MQTT.Aux.Subscription).GetTopicList(..ClientId, msgid, .tSC)
+	Set topics = ##class(Net.MQTT.Auxiliary.Subscription).GetTopicList(..ClientId, msgid, .tSC)
 	Set:$$$ISOK(tSC) tSC = ..SendUNSUBSCRIBE(msgid, topics, dup)
 	
 	Quit tSC
 }
 
 /// Sends a <b><var>PUBLISH</var></b> message to the MQTT broker. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a <class>Net.MQTT.Aux.MessageStore</class> object ID.
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a <class>Net.MQTT.Auxiliary.MessageStore</class> object ID.
 /// If it contains a colon, this is a repeated attempt, because no acknowledge has been received from the broker within the defined timout period.</p>
-/// <p>The details of the <b><var>PUBLISH</var></b> message are stored in the referenced <class>Net.MQTT.Aux.MessageStore</class> object.</p>
-/// <p>On QoS levels &gt; 0 it also pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state 
+/// <p>The details of the <b><var>PUBLISH</var></b> message are stored in the referenced <class>Net.MQTT.Auxiliary.MessageStore</class> object.</p>
+/// <p>On QoS levels &gt; 0 it also pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state 
 ///  (either waiting for a <b><var>PUBACK</var></b> or <b><var>PUBREC</var></b> message).</p>
 Method DoPUBLISH(pTaskId As %String, pMessageStoreId As %String) As %Status [ Internal, Private ]
 {
@@ -256,10 +291,10 @@ Method DoPUBLISH(pTaskId As %String, pMessageStoreId As %String) As %Status [ In
 	Set:$$$ISOK(tSC) tSC = ..SendPUBLISH(message, dup)
 	If $$$ISOK(tSC) {
 		If message.QoSLevel = 1 {
-			Set tSC = ##class(Net.MQTT.Aux.MessageStatus).AcknowledgeMessageOut(..ClientId, message.MessageId)
+			Set tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).AcknowledgeMessageOut(..ClientId, message.MessageId)
 		}
 		ElseIf message.QoSLevel = 2 {
-			Set tSC = ##class(Net.MQTT.Aux.MessageStatus).ReceiveMessageOut(..ClientId, message.MessageId)
+			Set tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).ReceiveMessageOut(..ClientId, message.MessageId)
 		}
 	}
 	
@@ -267,32 +302,32 @@ Method DoPUBLISH(pTaskId As %String, pMessageStoreId As %String) As %Status [ In
 }
 
 /// Sends a <b><var>PUBACK</var></b> message to the MQTT broker for an incoming, QoS Level 1 message. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Identifier.</p>
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Identifier.</p>
 /// <p>This is the end of the message flow of the incoming message.</p>
 Method DoPUBACK(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..SendPUBACK(pMessageId)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).DoneMessageIn(..ClientId, pMessageId)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).DoneMessageIn(..ClientId, pMessageId)
 	
 	Quit tSC
 }
 
 /// Sends a <b><var>PUBREC</var></b> message to the MQTT broker for an incoming, QoS Level 2 message. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Identifier.</p>
-/// <p>It also pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state (waiting for a <b><var>PUBREL</var></b> message).</p>
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Identifier.</p>
+/// <p>It also pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state (waiting for a <b><var>PUBREL</var></b> message).</p>
 Method DoPUBREC(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..SendPUBREC(pMessageId)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).ReleaseMessageIn(..ClientId, pMessageId)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).ReleaseMessageIn(..ClientId, pMessageId)
 	
 	Quit tSC
 }
 
 /// Sends a <b><var>PUBREL</var></b> message to the MQTT broker for an outgoing, QoS Level 2 message. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Identifier.
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Identifier.
 ///  If it contains a colon, this is a repeated attempt, because no acknowledge has been received for the original <b><var>PUBLISH</var></b> message
 ///  from the broker within the defined timout period.</p>
-/// <p>It also pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state (waiting for a <b><var>PUBCOMP</var></b> message).</p>
+/// <p>It also pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state (waiting for a <b><var>PUBCOMP</var></b> message).</p>
 Method DoPUBREL(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set dup = 0
@@ -302,18 +337,18 @@ Method DoPUBREL(pTaskId As %String, pMessageId As %String) As %Status [ Internal
 		Set dup = (''$Piece(pMessageId, ":", 2))
 	}
 	Set tSC = ..SendPUBREL(msgid, dup)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).CompleteMessageOut(..ClientId, pMessageId)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).CompleteMessageOut(..ClientId, pMessageId)
 	
 	Quit tSC
 }
 
 /// Sends a <b><var>PUBCOMP</var></b> message to the MQTT broker for an incoming, QoS Level 2 message. 
-/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Aux.TaskList</class> object is a Message Identifier.</p>
+/// <p>The <property>ContextId</property> of the corresponding <class>Net.MQTT.Auxiliary.TaskList</class> object is a Message Identifier.</p>
 /// <p>This is the end of the message flow of the incoming message.</p>
 Method DoPUBCOMP(pTaskId As %String, pMessageId As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..SendPUBCOMP(pMessageId)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).DoneMessageIn(..ClientId, pMessageId)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).DoneMessageIn(..ClientId, pMessageId)
 	
 	Quit tSC
 }
@@ -496,30 +531,30 @@ Method RecvUNSUBACK(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pCo
 Method RecvPUBACK(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..RecvAcknowledge("PUBACK", pDup, pQoS, pRetain, pContent, .msgid)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).DoneMessageOut(..ClientId, msgid)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).DoneMessageOut(..ClientId, msgid)
 
 	Quit tSC
 }
 
 /// Evaluates a <b><var>PUBREC</var></b> message, received from the MQTT Broker and 
 ///  signals the <class>Net.MQTT.Client</class> waiting for this acknowledge of a previously published QoS Level 2 message.
-/// <p>It also pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state (a <b><var>PUBREL</var></b> message has to be sent).</p>
+/// <p>It also pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state (a <b><var>PUBREL</var></b> message has to be sent).</p>
 Method RecvPUBREC(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..RecvAcknowledge("PUBREC", pDup, pQoS, pRetain, pContent, .msgid)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).ReleaseMessageOut(..ClientId, msgid)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).ReleaseMessageOut(..ClientId, msgid)
 
 	Quit tSC
 }
 
 /// Evaluates a <b><var>PUBREL</var></b> message, received from the MQTT Broker.
-/// <p>It pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state (a <b><var>PUBCOMP</var></b> message has to be sent),
-///  and cretes a new task (<class>Net.MQTT.Aux.TaskList</class>) to complete the next step of the QoS Level 2 message flow.</p>
+/// <p>It pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state (a <b><var>PUBCOMP</var></b> message has to be sent),
+///  and cretes a new task (<class>Net.MQTT.Auxiliary.TaskList</class>) to complete the next step of the QoS Level 2 message flow.</p>
 Method RecvPUBREL(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..RecvAcknowledge("PUBREL", pDup, pQoS, pRetain, pContent, .msgid)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).CompleteMessageIn(..ClientId, msgid)
-	Set:$$$ISOK(tSC) taskid = ##class(Net.MQTT.Aux.TaskList).CreateNewTask(..connectionId, msgid, "PUBCOMP", .tSC)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).CompleteMessageIn(..ClientId, msgid)
+	Set:$$$ISOK(tSC) taskid = ##class(Net.MQTT.Auxiliary.TaskList).CreateNewTask(..connectionId, msgid, "PUBCOMP", .tSC)
 
 	Quit tSC
 }
@@ -530,7 +565,7 @@ Method RecvPUBREL(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pCont
 Method RecvPUBCOMP(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = ..RecvAcknowledge("PUBCOMP", pDup, pQoS, pRetain, pContent, .msgid)
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).DoneMessageOut(..ClientId, msgid)
+	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).DoneMessageOut(..ClientId, msgid)
 	
 	Quit tSC
 }
@@ -546,14 +581,14 @@ Method RecvAcknowledge(pType As %String, pDup As %Boolean, pQoS As %Integer, pRe
 	}
 	Else {
 		Set pMsgId = $$$MQTTDecodeNumber(pContent)
-		Do ##class(Net.MQTT.Aux.TaskList).SignalAck(..connectionId, pMsgId, pType, $Select($$$ISOK(tSC): "", 1: $System.Status.GetErrorText(tSC)))
+		Do ##class(Net.MQTT.Auxiliary.TaskList).SignalAck(..connectionId, pMsgId, pType, $Select($$$ISOK(tSC): "", 1: $System.Status.GetErrorText(tSC)))
 	}
 	
 	Quit tSC
 }
 
 /// Evaluates a <b><var>SUBACK</var></b> message, received from the MQTT Broker,
-///  stores the QoS levels granted by the broker on the various items of the subscription message (see: <class>Net.MQTT.Aux.Subscription</class>)
+///  stores the QoS levels granted by the broker on the various items of the subscription message (see: <class>Net.MQTT.Auxiliary.Subscription</class>)
 ///  and signals the <class>Net.MQTT.Client</class> waiting for this acknowledge of the previously sent <b><var>SUBSCRIBE</var></b> message.
 Method RecvSUBACK(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
@@ -564,29 +599,30 @@ Method RecvSUBACK(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pCont
 	}
 	Else {
 		Set msgid = $$$MQTTDecodeNumber($Extract(pContent, 1, 2))
-		Set cnt = ##class(Net.MQTT.Aux.Subscription).GetTopicCount(..ClientId, msgid, .tSC)
+		Set cnt = ##class(Net.MQTT.Auxiliary.Subscription).GetTopicCount(..ClientId, msgid, .tSC)
 		If $$$ISOK(tSC) {
 			If $Length(pContent) '= (2 + cnt) {
 				Set tSC = $$$ERROR($$$GeneralError, "Invalid SUBACK message has arrived from <" _ ..Host _ ":" _ ..Port _ "> (# of topics)")
 			}
 			Else {
 				For i = 1: 1: cnt {
-					Set tSC = ##class(Net.MQTT.Aux.Subscription).AckTopic(..ClientId, msgid, i, $Case($Ascii($Extract(pContent, 2 + i)), $$$MQTTSubQoS2: 2, $$$MQTTSubQoS1: 1, : 0))
+					Set tSC = ##class(Net.MQTT.Auxiliary.Subscription).AckTopic(..ClientId, msgid, i, $Case($Ascii($Extract(pContent, 2 + i)), $$$MQTTSubQoS2: 2, $$$MQTTSubQoS1: 1, : 0))
 					Quit:$$$ISERR(tSC)
 				}
 			}
 		}
-		Do ##class(Net.MQTT.Aux.TaskList).SignalAck(..connectionId, msgid, "SUBACK", $Select($$$ISOK(tSC): "", 1: $System.Status.GetErrorText(tSC)))
+		Do ##class(Net.MQTT.Auxiliary.TaskList).SignalAck(..connectionId, msgid, "SUBACK", $Select($$$ISOK(tSC): "", 1: $System.Status.GetErrorText(tSC)))
 	}
 	
 	Quit tSC
 }
 
 /// Evaluates a <b><var>PUBLISH</var></b> message, received from the MQTT Broker and
-///  stores the incoming message as a <class>Net.MQTT.MessageStore</class> object.
-/// <p>If the QoS Level > 0, it also pushes the <class>Net.MQTT.Aux.MessageStatus</class> to the next state 
+///  sends the incoming message to the <property>OnMessage</property> callback method, which is responsible for
+///  optionally filtering, processing and storing of the message.
+/// <p>If the QoS Level > 0, it also pushes the <class>Net.MQTT.Auxiliary.MessageStatus</class> to the next state 
 ///  (either a <b><var>PUBACK</var></b> or <b><var>PUBREC</var></b> message has to be sent),
-///  and cretes a new task (<class>Net.MQTT.Aux.TaskList</class>) to complete the next step of the message flow.</p>
+///  and cretes a new task (<class>Net.MQTT.Auxiliary.TaskList</class>) to complete the next step of the message flow.</p>
 Method RecvPUBLISH(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pContent As %String) As %Status [ Internal, Private ]
 {
 	Set tSC = $$$OK
@@ -603,50 +639,63 @@ Method RecvPUBLISH(pDup As %Boolean, pQoS As %Integer, pRetain As %Boolean, pCon
 	}
 
 	TStart
-	Set tSC = ##class(Net.MQTT.Aux.MessageStatus).%LockExtent(0)
+	Set tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).%LockExtent(0)
 	TRY {
 		Set dup = $Select(pQoS > 0: pDup, 1: 0)
-		If dup {
-			Set dup = ##class(Net.MQTT.Aux.MessageStatus).IsRegisteredMessageIn(..ClientId, msgid)
-		}
-		If 'dup {
-			If pQoS > 0 {
-				Set tSC = ##class(Net.MQTT.Aux.MessageStatus).RegisterMessageIn(..ClientId, msgid, pQoS)
-				If $$$ISOK(tSC) {
-					Set taskid = ##class(Net.MQTT.Aux.TaskList).CreateNewTask(..connectionId, msgid, $Case(pQoS, 2: "PUBREC", : "PUBACK"), .tSC)
-				}
+		If pQoS > 0 {
+			If dup {
+				Set dup = ##class(Net.MQTT.Auxiliary.MessageStatus).IsRegisteredMessageIn(..ClientId, msgid)
 			}
+			If 'dup {
+				Set tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).RegisterMessageIn(..ClientId, msgid, pQoS)
+			}
+
+			// The acknowledgement mechanism is independent from the fact, 
+			//  whether the application message is a duplicate or not, or it is successfully processed by the OnMessage handler or not.
+			Set:$$$ISOK(tSC) taskid = ##class(Net.MQTT.Auxiliary.TaskList).CreateNewTask(..connectionId, msgid, $Case(pQoS, 2: "PUBREC", : "PUBACK"), .tSC)
 		}
 	}
 	CATCH ex {
 		Set tSC = ex.AsStatus()
-		$$$MQTTTraceINF("Error of saving a message. " _ ex.AsStatus())
-		return tSC
 	}
-	Do ##class(Net.MQTT.Aux.MessageStatus).%UnlockExtent()
+	Do ##class(Net.MQTT.Auxiliary.MessageStatus).%UnlockExtent()
 	If $$$ISOK(tSC) { TCommit }
 	Else { TRollback }
-	If $$$ISERR(tSC) {
-		Quit tSC
-	}
+	Quit:$$$ISERR(tSC) tSC
 	
-	Try {		
-		Set msg				= ##class(Net.MQTT.Message).%New()
-		Set msg.MessageId	= msgid
-		Set msg.QoSLevel	= pQoS
-		Set msg.Retain		= pRetain
-		Set msg.Topic		= topic
-		Set msg.Content		= $Extract(pContent, pos, *)
-		Set tSC = ..RunOnMessage(msg, topic)
+	Do ..ProcessMessage(msgid, topic, $Extract(pContent, pos, *), pDup, pQoS, pRetain)
+	
+	Quit $$$OK
+}
+
+/// Evaluates the <property>OnMessage</property> setting, calls the appropriate callback method and handles potential errors.
+Method ProcessMessage(pMsgId As %String, pTopic As %String, pContent As %String, pDuplicate As %Boolean, pQoS As %Integer, pRetain As %Boolean)
+{
+	Set tSC = $$$OK
+	TRY {
+		Set cbClass = $Piece(..OnMessage, ":", 1)
+		Set cbMethod = $Piece(..OnMessage, ":", 2)
+		
+		Set message = ##class(Net.MQTT.Message).%New()
+		Set message.ClientId = ..ClientId
+		Set message.MessageId = pMsgId
+		Set message.Topic = pTopic
+		Set message.Content = pContent
+		Set message.QoSLevel = pQoS
+		Set message.Retain = pRetain
+		Set tSC = $CLASSMETHOD(cbClass, cbMethod, .message, pDuplicate)
+		
+		Set tSC = $CLASSMETHOD("Net.MQTT.BMClient", "MyMessageHandler", message, pTopic)
+		
+		
 	}
 	CATCH ex {
 		Set tSC = ex.AsStatus()
 	}
+	
 	If $$$ISERR(tSC) {
-		$$$MQTTTraceERR("Error of saving a message. " _ $system.Status.GetErrorText(tSC))
+		$$$MQTTTraceERR("Message cannot be processed (ID='" _ pMsgId _ "', Content='" + pContent + "'): " _ $System.Status.GetErrorText(tSC))
 	}
-				
-	Quit $$$OK
 }
 
 Method CloseDev() [ Internal, Private ]
@@ -681,7 +730,7 @@ Method PackSendMsg(pMessage As %String, pMessageType As %Integer, pDup As %Boole
 	Set msg = header_pMessage
 	Write msg, !
 	Set ..lastMessage = $ZDateTime($ZTimeStamp, 3, 1)
-	$$$MQTTTraceOUT($$$MQTTMsgType(pMessageType), msg) 
+	$$$MQTTTraceOUT($$$MQTTMsgType(pMessageType), msg, $$$MQTTTraceInfo) 
 	
 	Quit $$$OK
 }
@@ -755,14 +804,6 @@ Storage Default
 </Data>
 <DefaultData>AgentDefaultData</DefaultData>
 <Type>%Library.CacheStorage</Type>
-}
-
-Method RunOnMessage(msg As Net.MQTT.Message, topic As %String) As %Status [ Private ]
-{
-	Set class = $P(..OnMessage, ":", 1)
-	Set method = $P(..OnMessage, ":", 2)
-	Set tSC = $ClassMethod(class, method, msg, topic)
-	return tSC
 }
 
 }

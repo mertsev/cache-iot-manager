@@ -17,19 +17,20 @@ Include MQTTOptions
 ///  duplicate messages are done (when an incoming message is repeated by the Broker, due to a lost acknowledge).</li>
 /// <li>For incoming QoS Level 2 messages no retry mechanism is implemented: if no <b><var>PUBREL</b></var> message would arrive
 ///  for the <b><var>PUBREC</b></var> acknowledge, the Agent will simply wait for it endless and the message remains in the 
-///  <class>Net.MQTT.Aux.MessageStatus</class>, registered with a <var>waiting for PUBREL</var> status.</li>
+///  <class>Net.MQTT.Auxiliary.MessageStatus</class>, registered with a <var>waiting for PUBREL</var> status.</li>
 /// </ul></p>
 /// <p>Questions, bug reports, recommendations are highly welcome to my <a href="mailto:Attila.Toth@InterSystems.com">Inbox</a>.</p>
 Class Net.MQTT.Client Extends (%Persistent, %XML.Adaptor)
 {
-
-Property OnMessage As %String;
 
 /// Host name of the MQTT Broker.
 Property Host As %String [ InitialExpression = "localhost" ];
 
 /// Port number of the MQTT Broker.
 Property Port As %String [ InitialExpression = 1883 ];
+
+/// SSL/TLS Configuration to be used to build a secured TCP Connection to the MQTT Broker.
+Property SSLConfig As %String;
 
 /// Timeout (in seconds) of building the TCP Connection to the MQTT Broker.
 Property ConnectTimeout As %Integer [ InitialExpression = 10 ];
@@ -66,6 +67,14 @@ Property Retry As %Integer [ InitialExpression = 2 ];
 /// <br/>This property controls the wait interval (in seconds) within each repeated attempts.
 Property RetryInterval As %Integer [ InitialExpression = 2 ];
 
+/// User-defined method, which is called whenever the <class>Net.MQTT.Agent</class> receives an incoming message.
+/// <p>The required format of the <property>OnMessage</property> property is: <var>Classname:MethodName</var>. 
+/// A sample implementation is provided in the <class>Net.MQTT.MessageHandler</class>.</p>
+/// 
+/// <p>If this property is empty, doesn't contain a valid classname/method name or the message handler method throws a runtime error,
+/// that event is logged in the <property>traceTarget</property> (if it's set).</p>
+Property OnMessage As %String [ InitialExpression = "Net.MQTT.MessageHandler:OnMessage" ];
+
 /// For debugging purposes this property can be set to any global variable names (e.g.: ^MQTT.Trace), 
 ///  in which case detailed trace information is logged into the specified global about the actions taken and also
 ///  the incoming and outgoing TCP communication.
@@ -78,8 +87,18 @@ Method traceGet() As %Boolean [ CodeMode = expression ]
 ..traceTarget '= ""
 }
 
+/// The following settings are available to influence the content to be traced in the <property>traceTarget</property>:<ul>
+/// <li><var>0</var> - no trace information</li>
+/// <li><var>1</var> - errors only</li>
+/// <li><var>2</var> - errors and warnings</li>
+/// <li><var>3</var> - beyond errors and warnings, information about the actions made by the MQTT Client and Agent</li>
+/// <li><var>4</var> - in this case even some originally temporary information is not deleted from auxiliary tables (e.g.: <class>Net.MQTT.Auxiliary.TaskList</li>
+/// </ul> 
+Property traceLevel As %Integer(DISPLAYLIST = ",notrace,error,warning,info,debug", VALUELIST = ",0,1,2,3,4") [ InitialExpression = 3, Required ];
+
+/// <b>*** DEPRECATED ***:</b> Use <property>traceLevel</property> instead.
 /// For debugging purposes this property can be set to 1, in which case some originally temporary information is not deleted from
-///  auxiliary tables (for example: <class>Net.MQTT.Aux.TaskList</class>). 
+///  auxiliary tables (for example: <class>Net.MQTT.Auxiliary.TaskList</class>). 
 Property debugMode As %Integer [ InitialExpression = 0 ];
 
 /// This property is a unique identifier of the <class>Net.MQTT.Client</class> and the related <class>Net.MQTT.Agent</class> instance,
@@ -100,7 +119,7 @@ Method StartAgent(pUsername As %String = "", pPassword As %String = "") As %Stat
 		Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent to <" _ ..Host _ ":" _ ..Port _ "> has already been started")
 	}
 	Else {
-		Set tSC = ##class(Net.MQTT.Aux.MessageCounter).CreateCounter(..ClientId)
+		Set tSC = ##class(Net.MQTT.Auxiliary.MessageCounter).CreateCounter(..ClientId)
 		Set:$$$ISOK(tSC) tSC = ..XMLExportToString(.data, "root")
 		If $$$ISOK(tSC) {
 			Do $System.Event.Create("^MQTT.Connect(""" _ ..connectionId _ """)")
@@ -129,7 +148,7 @@ Method StopAgent() As %Status
 {
 	Set tSC = $$$OK
 	If ..agent '= "" {
-		Set ret = ##class(Net.MQTT.Aux.TaskList).WaitTask(..connectionId, ..connectionId, "DISCONNECT", ..ConnectTimeout * 1.5, .tSC)
+		Set ret = ##class(Net.MQTT.Auxiliary.TaskList).WaitTask(..connectionId, ..connectionId, "DISCONNECT", ..ConnectTimeout * 1.5, .tSC)
 		If $$$ISOK(tSC) {
 			If $ListGet(ret, 1) < 1 {
 				Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent has not disconnected within the timeout period")
@@ -158,7 +177,7 @@ Method KillAgent() As %Status
 		}
 		Set ..agent = ""
 	}
-	Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageCounter).DropCounter(..ClientId)
+	Set tSC = $System.Status.AppendStatus(tSC, ##class(Net.MQTT.Auxiliary.MessageCounter).DropCounter(..ClientId))
 
 	// Re-initialize connection id for subsequent start of the Agent
 	Set ..connectionId = $System.Util.CreateGUID()
@@ -198,7 +217,7 @@ Method KillAgent() As %Status
 /// </example>
 Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")) As %Status
 {
-#dim sub As Net.MQTT.Aux.Subscription
+#dim sub As Net.MQTT.Auxiliary.Subscription
 	If ..agent = "" {
 		Quit $$$ERROR($$$GeneralError, "MQTT Agent to <" _ ..Host _ ":" _ ..Port _ "> has not been started yet")
 	}
@@ -206,7 +225,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 		Quit $$$ERROR($$$GeneralError, "At least one topic must be specified to subscribe for")
 	}
 	
-	Set msgId = ##class(Net.MQTT.Aux.MessageCounter).NextMessageId(..ClientId, .tSC)
+	Set msgId = ##class(Net.MQTT.Auxiliary.MessageCounter).NextMessageId(..ClientId, .tSC)
 	If $$$ISERR(tSC) {
 		$$$MQTTTraceERR($System.Status.GetErrorText(tSC))
 		Quit $$$ERROR($$$GeneralError, "Message ID for SUBSCRIBE message cannot be created")
@@ -215,7 +234,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 	TStart
 	TRY {
 		Set key = "", cnt = 0
-		Set sub = ##class(Net.MQTT.Aux.Subscription).CreateSubscription(..ClientId, msgId, .tSC)
+		Set sub = ##class(Net.MQTT.Auxiliary.Subscription).CreateSubscription(..ClientId, msgId, .tSC)
 		While $$$ISOK(tSC) {
 			Set topic = pTopics.GetNext(.key) Quit:(key = "")
 			Set tSC = sub.AddTopic(topic)
@@ -229,7 +248,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 	
 	Set retry = ..Retry, retcnt = 0, success = 0
 	While $$$ISOK(tSC) && (success '= 1) {
-		Set ret = ##class(Net.MQTT.Aux.TaskList).WaitTask(..connectionId, msgId _ $Select(retcnt: ":" _ retcnt, 1: ""), "SUBSCRIBE", ..ReadTimeout, .tSC)
+		Set ret = ##class(Net.MQTT.Auxiliary.TaskList).WaitTask(..connectionId, msgId _ $Select(retcnt: ":" _ retcnt, 1: ""), "SUBSCRIBE", ..ReadTimeout, .tSC)
 		If $$$ISOK(tSC) {
 			If $ListGet(ret, 1) < 1 {
 				Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent has not succeeded within the timeout period (" _ $ListGet(ret, 1) _ ")")
@@ -238,7 +257,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 				Set tSC = $$$ERROR($$$GeneralError, $ListGet(ret, 2))
 			}
 			Else {
-				Set ack = ##class(Net.MQTT.Aux.TaskList).WaitAck(..connectionId, msgId, "SUBACK", ..ReadTimeout)
+				Set ack = ##class(Net.MQTT.Auxiliary.TaskList).WaitAck(..connectionId, msgId, "SUBACK", ..ReadTimeout)
 				Set success  = $ListGet(ack, 1)
 				If (success = 0) && (retry > 0) {
 					$$$MQTTTraceERR("MQTT Agent has not received acknowledge within the timeout period (remaining reties: " _ retry _ ")")
@@ -260,7 +279,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 	
 	If $IsObject(sub) {
 		Set subid = sub.%Id(), sub = ""
-		Set tSC = $System.Status.AppendStatus(tSC, ##class(Net.MQTT.Aux.Subscription).DropSubscription(subid))
+		Set tSC = $System.Status.AppendStatus(tSC, ##class(Net.MQTT.Auxiliary.Subscription).DropSubscription(subid))
 	}
 	
 	Quit tSC
@@ -275,7 +294,7 @@ Method Subscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")
 /// <p>For usage example see the <method>Subscribe</method> method.</p>
 Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message")) As %Status
 {
-#dim sub As Net.MQTT.Aux.Subscription
+#dim sub As Net.MQTT.Auxiliary.Subscription
 	If ..agent = "" {
 		Quit $$$ERROR($$$GeneralError, "MQTT Agent to <" _ ..Host _ ":" _ ..Port _ "> has not been started yet")
 	}
@@ -283,7 +302,7 @@ Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message
 		Quit $$$ERROR($$$GeneralError, "At least one topic must be specified to unsubscribe from")
 	}
 	
-	Set msgId = ##class(Net.MQTT.Aux.MessageCounter).NextMessageId(..ClientId, .tSC)
+	Set msgId = ##class(Net.MQTT.Auxiliary.MessageCounter).NextMessageId(..ClientId, .tSC)
 	If $$$ISERR(tSC) {
 		$$$MQTTTraceERR($System.Status.GetErrorText(tSC))
 		Quit $$$ERROR($$$GeneralError, "Message ID for UNSUBSCRIBE message cannot be created")
@@ -292,7 +311,7 @@ Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message
 	TStart
 	TRY {
 		Set key = "", cnt = 0
-		Set sub = ##class(Net.MQTT.Aux.Subscription).CreateSubscription(..ClientId, msgId, .tSC)
+		Set sub = ##class(Net.MQTT.Auxiliary.Subscription).CreateSubscription(..ClientId, msgId, .tSC)
 		While $$$ISOK(tSC) {
 			Set topic = pTopics.GetNext(.key) Quit:(key = "")
 			Set tSC = sub.AddTopic(topic)
@@ -306,7 +325,7 @@ Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message
 	
 	Set retry = ..Retry, retcnt = 0, success = 0
 	While $$$ISOK(tSC) && (success '= 1) {
-		Set ret = ##class(Net.MQTT.Aux.TaskList).WaitTask(..connectionId, msgId _ $Select(retcnt: ":" _ retcnt, 1: ""), "UNSUBSCRIBE", ..ReadTimeout, .tSC)
+		Set ret = ##class(Net.MQTT.Auxiliary.TaskList).WaitTask(..connectionId, msgId _ $Select(retcnt: ":" _ retcnt, 1: ""), "UNSUBSCRIBE", ..ReadTimeout, .tSC)
 		If $$$ISOK(tSC) {
 			If $ListGet(ret, 1) < 1 {
 				Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent has not succeeded within the timeout period (" _ $ListGet(ret, 1) _ ")")
@@ -315,7 +334,7 @@ Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message
 				Set tSC = $$$ERROR($$$GeneralError, $ListGet(ret, 2))
 			}
 			Else {
-				Set ack = ##class(Net.MQTT.Aux.TaskList).WaitAck(..connectionId, msgId, "UNSUBACK", ..ReadTimeout)
+				Set ack = ##class(Net.MQTT.Auxiliary.TaskList).WaitAck(..connectionId, msgId, "UNSUBACK", ..ReadTimeout)
 				Set success  = $ListGet(ack, 1)
 				If (success = 0) && (retry > 0) {
 					$$$MQTTTraceERR("MQTT Agent has not received acknowledge within the timeout period (remaining reties: " _ retry _ ")")
@@ -334,7 +353,7 @@ Method Unsubscribe(ByRef pTopics As %ListOfObjects(ELEMENTTYPE="Net.MQTT.Message
 	
 	If $IsObject(sub) {
 		Set subid = sub.%Id(), sub = ""
-		Set tSC = $System.Status.AppendStatus(tSC, ##class(Net.MQTT.Aux.Subscription).DropSubscription(subid))
+		Set tSC = $System.Status.AppendStatus(tSC, ##class(Net.MQTT.Auxiliary.Subscription).DropSubscription(subid))
 	}
 
 	Quit tSC
@@ -386,8 +405,8 @@ Method Publish(pMessage As Net.MQTT.Message) As %Status
 	
 	Set tSC = $$$OK
 	If pMessage.QoSLevel > 0 {
-		Set pMessage.MessageId = ##class(Net.MQTT.Aux.MessageCounter).NextMessageId(..ClientId, .tSC)
-		Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Aux.MessageStatus).RegisterMessageOut(..ClientId, pMessage.MessageId)
+		Set pMessage.MessageId = ##class(Net.MQTT.Auxiliary.MessageCounter).NextMessageId(..ClientId, .tSC)
+		Set:$$$ISOK(tSC) tSC = ##class(Net.MQTT.Auxiliary.MessageStatus).RegisterMessageOut(..ClientId, pMessage.MessageId)
 	}
 	If $$$ISERR(tSC) {
 		$$$MQTTTraceERR($System.Status.GetErrorText(tSC))
@@ -407,7 +426,7 @@ Method Publish(pMessage As Net.MQTT.Message) As %Status
 	Set retry = ..Retry, retcnt = 0, success = 0
 	Set acktype = $Case(pMessage.QoSLevel, 2: "PUBREC", 1: "PUBACK", : "")
 	While $$$ISOK(tSC) && (success '= 1) {
-		Set ret = ##class(Net.MQTT.Aux.TaskList).WaitTask(..connectionId, msg.%Id() _ $Select(retcnt: ":" _ retcnt, 1: ""), "PUBLISH", ..ReadTimeout, .tSC)
+		Set ret = ##class(Net.MQTT.Auxiliary.TaskList).WaitTask(..connectionId, msg.%Id() _ $Select(retcnt: ":" _ retcnt, 1: ""), "PUBLISH", ..ReadTimeout, .tSC)
 		If $$$ISOK(tSC) {
 			If $ListGet(ret, 1) < 1 {
 				Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent has not succeeded within the timeout period (" _ $ListGet(ret, 1) _ ")")
@@ -419,7 +438,7 @@ Method Publish(pMessage As Net.MQTT.Message) As %Status
 				Set success = 1
 			}
 			ElseIf pMessage.QoSLevel > 0 {
-				Set ack = ##class(Net.MQTT.Aux.TaskList).WaitAck(..connectionId, pMessage.MessageId, acktype, ..ReadTimeout)
+				Set ack = ##class(Net.MQTT.Auxiliary.TaskList).WaitAck(..connectionId, pMessage.MessageId, acktype, ..ReadTimeout)
 				Set success  = $ListGet(ack, 1)
 				If (success = 0) && (retry > 0) {
 					$$$MQTTTraceERR("MQTT Agent has not received acknowledge within the timeout period (remaining reties: " _ retry _ ")")
@@ -450,7 +469,7 @@ Method PublishQoS2(pMessageId As %String) As %Status [ Internal, Private ]
 	
 	Set retry = ..Retry, retcnt = 0, success = 0
 	While $$$ISOK(tSC) && (success '= 1) {
-		Set ret = ##class(Net.MQTT.Aux.TaskList).WaitTask(..connectionId, pMessageId _ $Select(retcnt: ":" _ retcnt, 1: ""), "PUBREL", ..ReadTimeout, .tSC)
+		Set ret = ##class(Net.MQTT.Auxiliary.TaskList).WaitTask(..connectionId, pMessageId _ $Select(retcnt: ":" _ retcnt, 1: ""), "PUBREL", ..ReadTimeout, .tSC)
 		If $$$ISOK(tSC) {
 			If $ListGet(ret, 1) < 1 {
 				Set tSC = $$$ERROR($$$GeneralError, "MQTT Agent has not sent QoS=2 acknowledge within the timeout period (" _ $ListGet(ret, 1) _ ")")
@@ -459,7 +478,7 @@ Method PublishQoS2(pMessageId As %String) As %Status [ Internal, Private ]
 				Set tSC = $$$ERROR($$$GeneralError, $ListGet(ret, 2))
 			}
 			Else {
-				Set ack = ##class(Net.MQTT.Aux.TaskList).WaitAck(..connectionId, pMessageId, "PUBCOMP", ..ReadTimeout)
+				Set ack = ##class(Net.MQTT.Auxiliary.TaskList).WaitAck(..connectionId, pMessageId, "PUBCOMP", ..ReadTimeout)
 				Set success  = $ListGet(ack, 1)
 				If (success = 0) && (retry > 0) {
 					$$$MQTTTraceERR("MQTT Agent has not received QOS=2 acknowledge within the timeout period (remaining reties: " _ retry _ ")")
@@ -504,9 +523,9 @@ Method GetUTFString(pString As %String) As %String
 ///  won't be possible any more. Use <method>KillAgent</method> in this case!</p>
 ClassMethod ResetClient(pClientId As %String)
 {
-	Do ##class(Net.MQTT.Aux.MessageCounter).%DeleteId(pClientId)
-	&sql(DELETE FROM Net_MQTT_Aux.Subscription WHERE ClientId = :pClientId)
-	&sql(DELETE FROM Net_MQTT_Aux.MessageStatus WHERE ClientId = :pClientId)
+	Do ##class(Net.MQTT.Auxiliary.MessageCounter).%DeleteId(pClientId)
+	&sql(DELETE FROM Net_MQTT_Auxiliary.Subscription WHERE ClientId = :pClientId)
+	&sql(DELETE FROM Net_MQTT_Auxiliary.MessageStatus WHERE ClientId = :pClientId)
 }
 
 Storage Default
@@ -516,13 +535,13 @@ Storage Default
 <Value>%%CLASSNAME</Value>
 </Value>
 <Value name="2">
-<Value>OnMessage</Value>
-</Value>
-<Value name="3">
 <Value>Host</Value>
 </Value>
-<Value name="4">
+<Value name="3">
 <Value>Port</Value>
+</Value>
+<Value name="4">
+<Value>SSLConfig</Value>
 </Value>
 <Value name="5">
 <Value>ConnectTimeout</Value>
@@ -549,16 +568,22 @@ Storage Default
 <Value>RetryInterval</Value>
 </Value>
 <Value name="13">
-<Value>traceTarget</Value>
+<Value>OnMessage</Value>
 </Value>
 <Value name="14">
-<Value>debugMode</Value>
+<Value>traceTarget</Value>
 </Value>
 <Value name="15">
-<Value>connectionId</Value>
+<Value>debugMode</Value>
 </Value>
 <Value name="16">
+<Value>connectionId</Value>
+</Value>
+<Value name="17">
 <Value>agent</Value>
+</Value>
+<Value name="18">
+<Value>traceLevel</Value>
 </Value>
 </Data>
 <DataLocation>^Net.MQTT.ClientD</DataLocation>

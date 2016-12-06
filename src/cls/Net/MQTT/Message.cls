@@ -2,6 +2,10 @@
 Class Net.MQTT.Message Extends (%RegisteredObject, %XML.Adaptor)
 {
 
+/// In certain sitatuations the ClientId of the <class>Net.MQTT.Client</class> and <class>Net.MQTT.Agent</class> objects 
+/// is also recorded in the Message object. Usually this property remains empty though. 
+Property ClientId As %String(MAXLEN = 23);
+
 /// Message Identifier. Usually it doesn't have to be set, when used as an input parameter. 
 Property MessageId As %Integer(MAXVAL = 65535, MINVAL = 1);
 

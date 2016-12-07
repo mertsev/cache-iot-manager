@@ -8,9 +8,9 @@ Framework for managing IoT data through Intersystems Cache and simple angularJs 
 * Callback Mechanishm
 
 #Install guide
-1. Import Install.xml
-2. Create new web application called "rest" and set REST.Broker as a dispatch class
-3. Create new web application called "mqtt"
+1. Import and compile ClassImport.xml
+2. Import and compile InstallApp.xml (it adds 2 web apps)
+3. Copy mqtt folder into %CachePath%/CSP
 
 #Repo's used
 Attila Tóth's Cache MQTT client:

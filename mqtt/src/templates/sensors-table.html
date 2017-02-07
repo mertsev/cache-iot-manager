@@ -5,11 +5,11 @@
 	    <li ng-repeat="sensor in sensors.data" ng-class="{ active: sensors.isActiveTab($index) }" ng-click="sensors.setActiveTab($index)">
 			<a data-toggle="tab" href="#{{sensor.sensorType}}">{{sensor.sensorType}}</a>
 		</li>
-		<li ng-class="{ active: -2 }" ng-click="sensors.setActiveTab(-2)">
+		<li ng-class="{ active: sensors.isActiveTab(-2) }" ng-click="sensors.setActiveTab(-2)">
 			<a data-toggle="tab" href="#Sensors">Sensors</a>
 		</li>
 		<!-- Button for hiding table -->
-		<button type="button" class="btn { active: -1 }" style="float:right;" data-toggle="tab" ng-click="sensors.setActiveTab(-1)">
+		<button type="button" class="btn" ng-class ="{ active: sensors.isActiveTab(-1) }" style="float:right;" data-toggle="tab" ng-click="sensors.setActiveTab(-1)">
           <span class="glyphicon glyphicon-menu-hamburger"></span>
         </button>
 	  </ul>   
@@ -35,10 +35,10 @@
 	      </table>
 	    </div>
 	    <div id="Sensors" class="tab-pane fade" ng-class="{ in: sensors.isActiveTab(-2), active: sensors.isActiveTab(-2) }"	>
-	    	<div ng-repeat="lamp in sensors.lamps" class="light" style="float:left">
+	    	<div ng-repeat="lamp in sensors.lamps" class="light">
 	    		<div class="light-{{lamp.light}}"></div>
-	    		<p>{{lamp.value}}</p>
-	    		<p>{{lamp.device}}</p>
+	    		<p class="light-val">{{lamp.value}}</p>
+	    		<p class="light-dev">{{lamp.device}}</p>
 	    	</div>
 	    </div>
 	  </div>

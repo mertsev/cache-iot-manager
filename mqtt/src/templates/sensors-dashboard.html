@@ -1,1 +1,8 @@
-<iframe style="border: none" id="sensors" src="" width="100%" height="384">
+<h2>
+	Sensors dashboard
+	<!-- Button for hiding dashboard -->
+	<button type="button" class="btn" style="float:right;" ng-click="sensorsdashboard.ToggleDashboard()">
+      <span class="glyphicon glyphicon-menu-hamburger"></span>
+    </button>
+</h2>
+<iframe ng-show="sensorsdashboard.isEnabled" style="border: none" id="sensors" src="" width="100%" height="384">

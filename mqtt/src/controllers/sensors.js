@@ -23,6 +23,7 @@
 
 		$rootScope.$on('ConnectionEvent', function(event, data) {
 			ctrl.connected = data.connected;
+			ctrl.connectionID = data.connectionID;
 			if (ctrl.connected) {
 				ctrl.start();
 			}
@@ -30,6 +31,7 @@
 				ctrl.stop();
 			}
 		});
+
 		
 		var doRefresh = function() {
 			sensorsREST.getData(
@@ -46,19 +48,32 @@
 							
 							for (var i = 0; i < result.data.length; i++) {
 								var item = result.data[i];
+
+								if (item.sensor.toLowerCase().indexOf("light") !== -1)
+									item.sensor = "Light";
+								if (item.sensor.toLowerCase().indexOf("acceler") !== -1)
+									item.sensor = "Accelerometer";
+
 								if (typeof sensors[item.sensor] === 'undefined') {
 									data.push({ sensorType: item.sensor, devices: [] });
 									sensors[item.sensor] = data.length - 1;
 								}
-								var val = (parseFloat(item.value1)+parseFloat(item.value2)+parseFloat(item.value3))/3;
+								var val = (parseFloat(item.value1));
+								
 								// light lamp sensors
-								if (item.sensor == 'Light sensor')
+								if (item.sensor == "Light")
 								{			
 									var light = 0;
-									if (Date.parse(item.created) > (Date.now()-3000 - 25200000))
-										light = 1;
-									if (val > 10)
-										light = 2;
+									
+									if (Date.parse(item.created) > (Date.now() - 25210000))
+									{
+										if (val < 20)
+											light = 1;
+										else
+											light = 2;
+									}
+									if (light == 0)
+										val = 0;
 									lamps.push({ device: item.device, value: (val.toFixed(2)), light: light})
 								}
 								data[sensors[item.sensor]].devices.push(

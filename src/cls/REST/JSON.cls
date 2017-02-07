@@ -14,7 +14,7 @@ ClassMethod GetConnect(ClientID As %String) As %Status
    
    // Defining and saving the client
    set client = ##class(Net.MQTT.Client).%New()
-   set client.Host = "test.mosquitto.org"
+   set client.Host = "iot.eclipse.org"
    set client.ClientId = ClientID
    set client.traceTarget = ..#TRACETARGET
    set client.OnMessage = ..#ONMESSAGE
@@ -210,7 +210,7 @@ ClassMethod PostPublish(ClientObjectID As %String) As %Status
    
    // Opening a client from DB and publishing a message
    set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .status)
-   
+   set ^ERR(20) = ClientObjectID
    // Getting content data
    set obj = %request.Content.Read($$$MaxStringLength)
    // Defining mqtt message class and list of mqtt objects
@@ -237,7 +237,7 @@ ClassMethod PostPublish(ClientObjectID As %String) As %Status
 	quit $$$OK
 }
 
-ClassMethod GetLastMessages() As %Status
+ClassMethod GetLastMessages(ClientObjectID As %String) As %Status
 {
    set status=$$$OK
    // Definition of dynamic json object
@@ -264,7 +264,11 @@ ClassMethod GetLastMessages() As %Status
   	)
   	If '$Get(SQLCODE, 0) { &sql(OPEN c1) }
   	If $Get(SQLCODE, 0) { Set status = $$$ERROR($$$SQLError, SQLCODE, "Problem while opening 'c1'") }
-  
+  	
+  	set client = ##class(Net.MQTT.Client).%OpenId(ClientObjectID, -1, .status)
+		Set message = ##class(Net.MQTT.Message).%New()
+		set message.QoSLevel = 2
+  	
   	While $$$ISOK(status) {
 	  	&sql(FETCH c1) Quit:SQLCODE
 	  	do queryArray.%Push(
@@ -274,6 +278,12 @@ ClassMethod GetLastMessages() As %Status
 	  	"value1" : (value1),
 	  	"value2" : (value2),
 	  	"value3" : (value3)})
+	  	set upLight = $ZCONVERT(sensor, "t")
+			if $FIND(upLight, "LIGHT") '= 0 {
+	  		
+	  	
+	  	
+			}
  	}
  	
  	If $$$ISOK(status) && $Get(SQLCODE, 0) && (SQLCODE '= 100) {

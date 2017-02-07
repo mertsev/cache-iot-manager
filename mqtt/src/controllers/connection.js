@@ -23,9 +23,9 @@
 				var result = stopSubscribe();
 			if (result === 1) {
 				if (type == 1)
-    				$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Header: "Subscription", Text: "Your subscription is changed to" + $scope.link});
+    				$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Header: "Subscription", Text: "You subscribe to " + $scope.link});
     			else
-    				$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Header: "Subscription", Text: "Your unsubscription is changed to" + $scope.link});
+    				$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Header: "Subscription", Text: "You unsubscribe to " + $scope.link});
     		}
     		else {
     			$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Subscription", Text: "Failed: " + result});
@@ -84,7 +84,7 @@
 					if (typeof result === 'object') {
 						if (!result.success) {
 							// error
-							$scope.ConnErrMsg = "Server error while unsubscribing for MQTT Client: " + result.error;
+							$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Unsubscription", Text: "Server error while unsubscribing for MQTT Client: " + result.error});
 							console.log('Server error while unsubscribing for MQTT Client:\n' + result.error);
 						}
 						else {
@@ -94,13 +94,13 @@
 					}
 					else {
 						// error
-						$scope.ConnErrMsg = "Unexpected return value in stopSubscribe(): \"" + result + "\"";
+						$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Unsubscription", Text: "Unexpected return value in stopSubscribe(): \"" + result + "\""});
 						console.log('Unexpected return value in stopSubscribe(): \'' + result + '\'');
 					}
 				},
 				function(error) {
 					// error
-					$scope.ConnErrMsg = "Error while unsubscribing for MQTT Client: " + error;
+					$rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Unsubscription", Text: "Error while unsubscribing for MQTT Client: " + error});
 					console.log('Error while unsubscribing for MQTT Client:\n' + error);
 				}
 			);
@@ -122,7 +122,6 @@
 								// success
 								sessionStorage.setItem('loaded', true);
 								ctrl.connectionID = result.clientObject;
-								$rootScope.$emit('ConnectionEvent', { connected: ctrl.connected, connectionID: ctrl.connectionID });
 								startSubscribe();
 							}
 							else {

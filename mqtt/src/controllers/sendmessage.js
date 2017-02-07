@@ -26,24 +26,21 @@
                 if (typeof result === 'object') {
                   if (!result.success) {
                     // error
-                    $scope.ConnErrMsg = "Server error while subscribing for MQTT Client: " + result.error;
-                    console.log('Server error while subscribing for MQTT Client:\n' + result.error);
+                    $rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Send message", Text: "Message sending is failed"});
                   }
                   else {
                     // success
-                    $rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Text: "Message sending is successful"})
+                    $rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 1, Header: "Send message", Text: "Message sending is successful"});
                   }
                 }
                 else {
                   // error
-                  $scope.ConnErrMsg = "Unexpected return value in startSubscribe(): \"" + result + "\"";
-                  console.log('Unexpected return value in startSubscribe(): \'' + result + '\'');
+                  $rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Send message", Text: "Message sending is failed: \"" + result + "\""});
                 }
               },
               function(error) {
                 // error
-                $scope.ConnErrMsg = "Error while subscribing for MQTT Client: " + error;
-                console.log('Error while subscribing for MQTT Client:\n' + error);
+                $rootScope.$emit('ShowModal', { numberOfModal: 1, Type: 3, Header: "Send message", Text: "Message sending is failed: " + error});
               });
     }
     

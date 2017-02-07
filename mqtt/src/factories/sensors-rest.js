@@ -8,7 +8,7 @@
 		factory.getData = function(connectionid, successHandler, errorHandler) {
 			$http({
 				method: 'GET',
-				url: factory.url + 'messages'
+				url: factory.url + 'messages/' + connectionid
 			}).then(
 				// success
 				function(result) {

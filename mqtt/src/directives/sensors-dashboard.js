@@ -4,7 +4,7 @@
 			restrict: 'E',
 			templateUrl: 'src/templates/sensors-dashboard.html',
 			controller: 'DashboardController',
-			controllerAs: 'sensors-dashboard.js',
+			controllerAs: 'sensorsdashboard',
 			bindToController: true
 		}
 	});

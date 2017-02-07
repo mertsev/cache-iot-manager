@@ -685,7 +685,7 @@ Method ProcessMessage(pMsgId As %String, pTopic As %String, pContent As %String,
 		Set message.Retain = pRetain
 		Set tSC = $CLASSMETHOD(cbClass, cbMethod, .message, pDuplicate)
 		
-		Set tSC = $CLASSMETHOD("Net.MQTT.BMClient", "MyMessageHandler", message, pTopic)
+		Set tSC = $CLASSMETHOD("Net.MQTT.BMClient", "MyMessageHandler", message, pTopic, $this)
 		
 		
 	}

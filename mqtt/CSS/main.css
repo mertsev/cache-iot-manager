@@ -106,8 +106,9 @@ body {
 /*# sourceMappingURL=main.css.map */
 
 .light {
-  padding: 20px;
-  margin: 0 5px;
+  float:left;
+  margin: 5px;
+  padding: 5px;
   border: 2px solid gray;
   background-color: #aaa;
   text-align: center;
@@ -119,6 +120,7 @@ body {
   behavior: url(border-radius.htc);
 }
 .light-0, .light-1, .light-2 {
+  margin: 5px auto 0;
   height: 40px;
   width: 40px;
   -moz-border-radius: 20px 20px 20px 20px; /* Firefox */
@@ -128,6 +130,13 @@ body {
   /* For very bed IE */
   behavior: url(border-radius.htc);
 }
+.light-val {
+  margin: 10px 10px 0;
+}
+.light-dev {
+  margin: 0;
+}
+
 .light-1 {
   background-color: blue;
 }

@@ -35,6 +35,7 @@ For more info about this project check out this [User/Development guide](https:/
  ```
  server:port/csp/mqttiot/mqttweb/index.html
  ```
+7. Install mqtt_app.apk on Android device
 
 #Repo's used
 [Attila Tóth's Cache MQTT client](https://github.com/atothISC/COS-MQTTClient)

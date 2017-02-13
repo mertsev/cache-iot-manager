@@ -9,6 +9,7 @@ For more info about this project check out this [User/Development guide](https:/
 * Web GUI
 * Storage
 * Callback Mechanishm
+* Adnroid application mqtt_app that sends light sensors data on server
 
 #Installation guide
 1. Make sure you have [CacheUpdater](https://github.com/intersystems-ru/CacheUpdater) installed

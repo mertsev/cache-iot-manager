@@ -36,7 +36,7 @@ For more info about this project check out this [User/Developer guide](https://d
  ```
 9. To use IoT Manager open 
  ```
- server:port/csp/mqttweb/index.html
+ server:port/mqttweb/index.html
  ```
 10. Install mqtt_app.apk on Android device if you need it
 
